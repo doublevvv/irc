@@ -6,7 +6,7 @@
 /*   By: doublevv <vv>                              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/03 10:49:08 by doublevv          #+#    #+#             */
-/*   Updated: 2025/07/08 08:02:03 by doublevv         ###   ########.fr       */
+/*   Updated: 2025/07/12 15:14:20 by doublevv         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,35 +19,38 @@
 #include <sys/socket.h>
 #include <netdb.h> // * acceder a struct hostent (infos machines hote)
 #include <netinet/in.h> // * library for ipv6
+#include <bits/stdc++.h>
+
+#define PORT 4242
 
 class Client
 {
 	public:
 		Client();
 		~Client();
-
 		Client &operator=(const Client &rhs);
-
-		//Methods
-
-	protected:
-
+		int	get_fd();
+		void	set_fd(int fd);
 	private:
+		int _fd_client;
+		int	_status;
 };
 
 
-class Server {
+class Server
+{
 	public:
 		Server();
 		~Server();
-
 		Server &operator=(const Server &rhs);
-
-		//Methods
-
-	protected:
+		int create_server(std::string arg);
+		int	get_fd();
+		void	set_fd(int fd);
 
 	private:
+		int _fd_server;
+		int	_status;
 };
 
+// ! GUETTEUR
 #endif

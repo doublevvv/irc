@@ -6,7 +6,7 @@
 /*   By: doublevv <vv>                              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/07 18:53:23 by doublevv          #+#    #+#             */
-/*   Updated: 2025/07/07 19:13:02 by doublevv         ###   ########.fr       */
+/*   Updated: 2025/07/12 15:15:42 by doublevv         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,4 +53,16 @@ int shutdown(int fd, int how)
 int close(int fd)
 {
 
+}
+
+//------------------------------------------------------------------------------------
+
+int	Client::get_fd(void)
+{
+	return (this->_fd_client);
+}
+
+void	Client::set_fd(int fd)
+{
+	this->_fd_client = fd;
 }
