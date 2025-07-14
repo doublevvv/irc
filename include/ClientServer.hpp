@@ -6,7 +6,7 @@
 /*   By: doublevv <vv>                              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/03 10:49:08 by doublevv          #+#    #+#             */
-/*   Updated: 2025/07/12 15:14:20 by doublevv         ###   ########.fr       */
+/*   Updated: 2025/07/14 14:18:13 by doublevv         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,6 +29,7 @@ class Client
 		Client();
 		~Client();
 		Client &operator=(const Client &rhs);
+		int create_client(std::string arg);
 		int	get_fd();
 		void	set_fd(int fd);
 	private:

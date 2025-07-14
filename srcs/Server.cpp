@@ -6,7 +6,7 @@
 /*   By: doublevv <vv>                              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/03 17:25:45 by doublevv          #+#    #+#             */
-/*   Updated: 2025/07/12 15:47:18 by doublevv         ###   ########.fr       */
+/*   Updated: 2025/07/14 14:14:02 by doublevv         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -140,15 +140,15 @@ int	Server::create_server(std::string arg)
 		bytes_read = recv(client.get_fd(), buffer, BUFSIZ, 0);
 		if (bytes_read == -1)
 		{
-			throw(std::invalid_argument("invalid status\n"));
+			throw (std::invalid_argument("recv error\n"));
 			return (1);
 		}
-		else
-			
-
 	}
-
-
+	std::cout << "closing client socket" << std::endl;
+	close(client.get_fd());
+	std::cout << "closing server socket" << std::endl;
+	close(server._fd_server);
+	return (0);
 }
 
 

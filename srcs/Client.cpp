@@ -6,7 +6,7 @@
 /*   By: doublevv <vv>                              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/07 18:53:23 by doublevv          #+#    #+#             */
-/*   Updated: 2025/07/12 15:15:42 by doublevv         ###   ########.fr       */
+/*   Updated: 2025/07/14 16:08:51 by doublevv         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -65,4 +65,64 @@ int	Client::get_fd(void)
 void	Client::set_fd(int fd)
 {
 	this->_fd_client = fd;
+}
+
+int	Client::create_client(std::string arg)
+{
+	Client client;
+	struct sockaddr_in sa;
+	char buffer[BUFSIZ];
+	int bytes_read;
+	std::string msg;
+	int msg_len;
+	int bytes_sent;
+
+	memset(&sa, 0, sizeof sa);
+	sa.sin_family = AF_INET;
+	sa.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+	sa.sin_port = htons(PORT);
+
+	client._fd_client = socket(sa.sin_family, SOCK_STREAM, 0);
+	if (client._fd_client == -1)
+	{
+		throw(std::invalid_argument("invalid socket\n"));
+		return (1);
+	}
+	std::cout << "socket created" << std::endl;
+	client._status = connect(client._fd_client, (struct sockaddr *)&sa, sizeof sa);
+	if (client._status == -1)
+	{
+		throw(std::invalid_argument("invalid status\n"));
+		return (1);
+	}
+	msg = arg;
+	msg_len = arg.size();
+	bytes_sent = send(client._fd_client, msg.c_str(), msg_len, 0);
+	if (bytes_sent == -1)
+	{
+		throw(std::invalid_argument("send error\n"));
+		return (1);
+	}
+	else if (bytes_sent == msg_len)
+	{
+		std::cout << "full msg ok" << std::endl;
+	}
+	bytes_read = 1;
+	while (bytes_read >= 0)
+	{
+		bytes_read = recv(client._fd_client, buffer, BUFSIZ, 0);
+		if (bytes_read = -1)
+		{
+			std::cout << "error recv" << std::endl;
+		}
+		else
+		{
+			buffer[bytes_read] = '\0';
+			std::cout << "msg received: %s\n" << buffer;
+			break;
+		}
+	}
+	std::cout << "closing socket client" << std::endl;
+	close(client._fd_client);
+	return (0);
 }

@@ -6,17 +6,17 @@
 #    By: doublevv <vv>                              +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/07/03 10:45:18 by doublevv          #+#    #+#              #
-#    Updated: 2025/07/03 10:47:48 by doublevv         ###   ########.fr        #
+#    Updated: 2025/07/14 16:09:32 by doublevv         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 NAME =
 
-SOURCES = main.cpp
+SOURCES = main.cpp srcs/Client.cpp srcs/Server.cpp
 
 SRCS = $(SOURCES)
 
-#SRCS = $(addprefix $(OBJ_DIR)/, $(SOURCES))
+SRCS = $(addprefix $(OBJ_DIR)/, $(SOURCES))
 
 OBJ_DIR = objs
 
