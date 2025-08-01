@@ -6,11 +6,11 @@
 /*   By: doublevv <vv>                              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/07 18:53:23 by doublevv          #+#    #+#             */
-/*   Updated: 2025/07/14 16:08:51 by doublevv         ###   ########.fr       */
+/*   Updated: 2025/07/15 11:53:50 by doublevv         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "ClientServer.hpp"
+#include "../include/ClientServer.hpp"
 
 /*
 		CLIENT:
@@ -22,38 +22,38 @@
 	5) fermer la socket "CLOSE"
 */
 
-int	socket(int domain, int type, int protocol)
-{
-	domain = AF_INET6;
-	type = SOCK_STREAM; // *envois successifs d'informations s'additionnent, il n'y a pas de "séparations" entre elles
-	protocol = 0;
-}
+// int	socket(int domain, int type, int protocol)
+// {
+// 	domain = AF_INET6;
+// 	type = SOCK_STREAM; // *envois successifs d'informations s'additionnent, il n'y a pas de "séparations" entre elles
+// 	protocol = 0;
+// }
 
-int	connect(int fd, const struct sockaddr *serv_addr, socklen_t addrlen)
-{
-	//* serv_addr = pointeur vers struct qui contient infos de co. sockaddr_in pour une adresse IPv4
-}
+// int	connect(int fd, const struct sockaddr *serv_addr, socklen_t addrlen)
+// {
+// 	//* serv_addr = pointeur vers struct qui contient infos de co. sockaddr_in pour une adresse IPv4
+// }
 
-int	send(int fd, char *buffer, int len, int options)
-{
+// int	send(int fd, char *buffer, int len, int options)
+// {
 
-}
+// }
 
-int	recv(int fd, void *buffer, int len, int flags)
-{
-	// * buffer = points to a buffer where the message should be stored
-	// * flags = type of message reception
-}
+// int	recv(int fd, void *buffer, int len, int flags)
+// {
+// 	// * buffer = points to a buffer where the message should be stored
+// 	// * flags = type of message reception
+// }
 
-int shutdown(int fd, int how)
-{
-	// * how = entier qui contient des drapeaux qui indiquent comment fermer la socket
-}
+// int shutdown(int fd, int how)
+// {
+// 	// * how = entier qui contient des drapeaux qui indiquent comment fermer la socket
+// }
 
-int close(int fd)
-{
+// int close(int fd)
+// {
 
-}
+// }
 
 //------------------------------------------------------------------------------------
 
@@ -67,7 +67,7 @@ void	Client::set_fd(int fd)
 	this->_fd_client = fd;
 }
 
-int	Client::create_client(std::string arg)
+int	Client::crea_client(std::string arg)
 {
 	Client client;
 	struct sockaddr_in sa;
@@ -111,7 +111,7 @@ int	Client::create_client(std::string arg)
 	while (bytes_read >= 0)
 	{
 		bytes_read = recv(client._fd_client, buffer, BUFSIZ, 0);
-		if (bytes_read = -1)
+		if (bytes_read == -1)
 		{
 			std::cout << "error recv" << std::endl;
 		}

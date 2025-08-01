@@ -6,11 +6,11 @@
 /*   By: doublevv <vv>                              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/03 17:25:45 by doublevv          #+#    #+#             */
-/*   Updated: 2025/07/14 14:14:02 by doublevv         ###   ########.fr       */
+/*   Updated: 2025/08/01 13:18:27 by doublevv         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "ClientServer.hpp"
+#include "../include/ClientServer.hpp"
 
 /*
 		SERVER:
@@ -25,60 +25,60 @@
 	8) fermer la socket "CLOSE"
 */
 
-int	socket(int domain, int type, int protocol)
-{
-	domain = AF_INET6;
-	type = SOCK_STREAM; // *envois successifs d'informations s'additionnent, il n'y a pas de "séparations" entre elles
-	protocol = 0;
-}
+// int	socket(int domain, int type, int protocol)
+// {
+// 	domain = AF_INET6;
+// 	type = SOCK_STREAM; // *envois successifs d'informations s'additionnent, il n'y a pas de "séparations" entre elles
+// 	protocol = 0;
+// }
 
-int	bind(int fd, struct sockadrr *addr, int addrlen)
-{
-	sockaddr_in serverstruc;
-	// ? pourquoi ivp4 et pas 6 ?
+// int	bind(int fd, struct sockadrr *addr, int addrlen)
+// {
+// 	sockaddr_in serverstruc;
+// 	// ? pourquoi ivp4 et pas 6 ?
 
-	serverstruc.sin_family = AF_INET;
-	serverstruc.sin_port = // ? comment choisir un port ?
-	serverstruc.sin_addr.s_addr = INADDR_ANY; // * any local adress
-}
+// 	serverstruc.sin_family = AF_INET;
+// 	serverstruc.sin_port = // ? comment choisir un port ?
+// 	serverstruc.sin_addr.s_addr = INADDR_ANY; // * any local adress
+// }
 
-int connect(int fd, struct sockaddr *addr, int addrlen)
-{
-	// * fd = retour de la fonction socket;
-}
+// int connect(int fd, struct sockaddr *addr, int addrlen)
+// {
+// 	// * fd = retour de la fonction socket;
+// }
 
-int	listen(int fd, int backlog)
-{
-	// * fd = retour de la fonction socket;
-	// * backlog = nbr max co en attente
-}
-int accept(int fd, struct sockadrr *adrr, int *addrlen)
-{
-	// ! accept est bloqunt par defaut -> utiliser QU'UN SEUL POOL
-	// * fd = retour de la fonction socket;
-	// * renvoie un nouveau descripteur de fichier (ou -1 si erreur), c'est sur ce nouveau descripteur qu'on fera nos opérations d'envoi et d'écoute
-}
+// int	listen(int fd, int backlog)
+// {
+// 	// * fd = retour de la fonction socket;
+// 	// * backlog = nbr max co en attente
+// }
+// int accept(int fd, struct sockadrr *adrr, int *addrlen)
+// {
+// 	// ! accept est bloqunt par defaut -> utiliser QU'UN SEUL POOL
+// 	// * fd = retour de la fonction socket;
+// 	// * renvoie un nouveau descripteur de fichier (ou -1 si erreur), c'est sur ce nouveau descripteur qu'on fera nos opérations d'envoi et d'écoute
+// }
 
-int	recv(int fd, void *buffer, int len, int flags)
-{
-	// * buffer = points to a buffer where the message should be stored
-	// * flags = type of message reception
-}
+// int	recv(int fd, void *buffer, int len, int flags)
+// {
+// 	// * buffer = points to a buffer where the message should be stored
+// 	// * flags = type of message reception
+// }
 
-int	send(int fd, char *buffer, int len, int options)
-{
+// int	send(int fd, char *buffer, int len, int options)
+// {
 
-}
+// }
 
-int shutdown(int fd, int how)
-{
-	// * how = entier qui contient des drapeaux qui indiquent comment fermer la socket
-}
+// int shutdown(int fd, int how)
+// {
+// 	// * how = entier qui contient des drapeaux qui indiquent comment fermer la socket
+// }
 
-int close(int fd)
-{
+// int close(int fd)
+// {
 
-};
+// };
 
 //------------------------------------------------------------------------------------
 
@@ -151,5 +151,106 @@ int	Server::create_server(std::string arg)
 	return (0);
 }
 
+/*
+SETSOCKOPT is short for "set socket option", which pretty well sums up what its purpose is -- as a generic way to set various options for a socket. It's designed to be flexible enough to
+support both current optional-functionality as well as any additional options that might be added to the network stack in the future, hence the (rather awkward) pass-by-pointer-and-size
+semantics of the call, which can be used to pass any type or amount of option-configuring data if necessary.
+As to the particular options specified (incorrectly, btw) in your code snippet: the SO_REUSEADDR arg tells the OS that calls to bind() this socket are allowed to reuse a
+local address; this is particularly useful when stopping and then quickly restarting a server, since otherwise the address you want to bind to might still be allocated to the
+previous server instance, and thus your server won't be able to bind() to it for several minutes.
+SO_REUSEPORT tells the OS that you'd like to allow multiple sockets to bind to the same socket address simultaneously; it's useful e.g.
+when running multiple clients that all want to receive the multicast or broadcast traffic coming in on a given port simultaneously.
+*/
+
+int	Server::init_server()
+{
+	Server	serv;
+	struct sockaddr_in sa;
 
 
+	memset(&sa, 0, sizeof sa);
+
+	serv._fd_server = socket(AF_INET, SOCK_STREAM, 0);
+	if (serv._fd_server < -1)
+	{
+		std::cout << "socket failed : " << strerror(errno) << std::endl;
+		return (1);
+	}
+	std::cout << "SERVER FD : " << _fd_server << std::endl;
+	const int opt = 1;
+	if (setsockopt(serv._fd_server, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt)) < 0)
+	{
+		std::cout << "error : " << strerror(errno) << std::endl;
+		return (1);
+	}
+	sa.sin_family = AF_INET;
+	sa.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+	sa.sin_port = htons(PORT);
+	memset((struct sockaddr*) &sa, 0, sizeof(sa));
+	serv._status = bind(serv._fd_server, (struct sockaddr*)&sa, sizeof sa);
+	if (serv._status == -1)
+	{
+		std::cout << "SERVER FD INSIDE : " << _fd_server << std::endl;
+		std::cout << "bind failed : " << strerror(errno) << std::endl;
+		return (1);
+	}
+	std::cout << "SERVER STATUS : " << _status << std::endl;
+	std::cout << "here\n";
+	serv._status = listen(serv._fd_server, 20);
+	std::cout << "LISTEN STATUS : " << _status << std::endl;
+	if (serv._status == -1)
+	{
+		std::cout << "listen failed : " << strerror(errno) << std::endl;
+		return (1);
+	}
+	return (0);
+}
+
+int	Server::checkPoll()
+{
+	Server	serv;
+	struct pollfd fds[FD_COUNT];
+	// nfds_t	nfds;
+
+	memset(fds, 0, sizeof(fds));
+	fds[0].fd = _fd_server;
+	fds[0].events = POLLIN;
+	// ? timeout ?
+	int timeout = (1 * 60 * 1000);
+	std::cout << "Waiting on poll()...\n";
+	serv._status = poll(fds, 5, timeout);
+	if (serv._status < 0)
+	{
+		std::cout << "poll failed : " << strerror(errno) << std::endl;
+		// ! ne pas oublier de fermer les fd a chaque erreur (fonction pour gerer ca)
+		return (1);
+	}
+	// ? verifier le timeout ?
+	if (serv._status == 0)
+	{
+		std::cout << "timeout\n";
+		return(1);
+	}
+	int size = 5;
+	for (int i = 0; i < size; i++)
+	{
+		if (fds[i].revents == 0)
+		{
+
+			std::cout<< "here\n";
+			continue ;
+		}
+		if (fds[i].fd == serv._fd_server)
+		{
+			//* accepter nouveaux clients
+			std::cout << "Listening socket is readable\n";
+		}
+	}
+	return (0);
+}
+
+int	Server::newclient()
+{
+
+	return (0);
+}
