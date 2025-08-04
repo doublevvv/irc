@@ -6,7 +6,7 @@
 /*   By: doublevv <vv>                              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/03 10:49:08 by doublevv          #+#    #+#             */
-/*   Updated: 2025/08/01 12:59:26 by doublevv         ###   ########.fr       */
+/*   Updated: 2025/08/04 13:26:22 by doublevv         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,6 +35,7 @@ class Client
 		int crea_client(std::string arg);
 		int	get_fd();
 		void	set_fd(int fd);
+		int	initClient();
 	private:
 		int _fd_client;
 		int	_status;
@@ -52,11 +53,14 @@ class Server
 		int create_server(std::string arg);
 		int	init_server();
 		int	checkPoll();
-		int	newclient();
+		int	newClient();
+		int	newData();
 
 		private:
 		int _fd_server;
 		int	_status;
+		int	_newclientfd;
+		int	_data_client;
 };
 
 // ! GUETTEUR

@@ -6,7 +6,7 @@
 /*   By: doublevv <vv>                              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/07 18:53:23 by doublevv          #+#    #+#             */
-/*   Updated: 2025/07/15 11:53:50 by doublevv         ###   ########.fr       */
+/*   Updated: 2025/08/04 13:35:34 by doublevv         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -125,4 +125,26 @@ int	Client::crea_client(std::string arg)
 	std::cout << "closing socket client" << std::endl;
 	close(client._fd_client);
 	return (0);
+}
+
+int	Client::initClient()
+{
+	Client client;
+	struct sockaddr_in sa;
+	char buffer[BUFSIZ];
+
+	memset(&sa, 0, sizeof sa);
+	client._fd_client = socket(AF_INET, SOCK_STREAM, 0);
+	if (client._fd_client < -1)
+	{
+		std::cout << "socket failed : " << strerror(errno) << std::endl;
+		return (1);
+	}
+	client._status = connect(client._fd_client, (struct sockaddr *)&sa, sizeof sa);
+	if (client._status == -1)
+	{
+		std::cout << "connection failed : " << strerror(errno) << std::endl;
+		return (1);
+	}
+
 }

@@ -6,7 +6,7 @@
 /*   By: doublevv <vv>                              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/03 17:25:45 by doublevv          #+#    #+#             */
-/*   Updated: 2025/08/01 13:18:27 by doublevv         ###   ########.fr       */
+/*   Updated: 2025/08/04 13:18:17 by doublevv         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -167,7 +167,6 @@ int	Server::init_server()
 	Server	serv;
 	struct sockaddr_in sa;
 
-
 	memset(&sa, 0, sizeof sa);
 
 	serv._fd_server = socket(AF_INET, SOCK_STREAM, 0);
@@ -245,12 +244,63 @@ int	Server::checkPoll()
 			//* accepter nouveaux clients
 			std::cout << "Listening socket is readable\n";
 		}
+		// else
+		// * receives new data
 	}
 	return (0);
 }
 
-int	Server::newclient()
+int	Server::newClient()
 {
+	Server serv;
+	struct sockaddr_in sa_client;
+	struct pollfd fds[FD_COUNT];
 
+	memset(&sa_client, 0, sizeof sa_client);
+
+	serv._newclientfd = accept(serv._fd_server, NULL, NULL);
+	if (serv._newclientfd < 0)
+	{
+		if (errno != EWOULDBLOCK)
+			std::cout << "accept failed : " << strerror(errno) << std::endl;
+		return (1); // ? ou break ?
+	}
+	std::cout << "New incoming connection - %d\n" << serv._newclientfd;
+	fds[5].fd = serv._newclientfd;
+	fds[5].events = POLLIN;
 	return (0);
+}
+
+int	Server::newData()
+{
+	Server serv;
+	int	len;
+	int	buffer[BUFSIZ];
+	struct pollfd fds[FD_COUNT];
+
+	for (int i = 0; i < FD_COUNT; i++)
+	{
+		serv._data_client = recv(fds[i].fd, buffer, sizeof(buffer), 0);
+		if (serv._data_client < 0)
+		{
+			if (errno != EWOULDBLOCK)
+				std::cout << "recv failed : " << strerror(errno) << std::endl;
+		}
+		break ;
+		if (serv._data_client == 0)
+		{
+			std::cout << "connection closed\n";
+			break ;
+		}
+		len = serv._data_client;
+		std::cout << "%d bytes received\n" << len;
+		serv._data_client = send(fds[i].fd, buffer, len, 0);
+		if (serv._data_client < 0)
+		{
+			std::cout << "connection closed\n";
+						break ;
+		}
+
+	}
+	// ! ne pas oublier de close tous les fd
 }
