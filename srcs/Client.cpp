@@ -6,7 +6,7 @@
 /*   By: doublevv <vv>                              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/07 18:53:23 by doublevv          #+#    #+#             */
-/*   Updated: 2025/08/04 13:35:34 by doublevv         ###   ########.fr       */
+/*   Updated: 2025/08/07 12:44:51 by doublevv         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -135,6 +135,7 @@ int	Client::initClient()
 
 	memset(&sa, 0, sizeof sa);
 	client._fd_client = socket(AF_INET, SOCK_STREAM, 0);
+	std::cout << "FD CLIENT : \n" << client._fd_client;
 	if (client._fd_client < -1)
 	{
 		std::cout << "socket failed : " << strerror(errno) << std::endl;
@@ -146,5 +147,6 @@ int	Client::initClient()
 		std::cout << "connection failed : " << strerror(errno) << std::endl;
 		return (1);
 	}
+
 
 }

@@ -6,7 +6,7 @@
 /*   By: doublevv <vv>                              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/03 17:25:45 by doublevv          #+#    #+#             */
-/*   Updated: 2025/08/04 13:18:17 by doublevv         ###   ########.fr       */
+/*   Updated: 2025/08/09 12:01:41 by doublevv         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -92,64 +92,64 @@ void	Server::set_fd(int fd)
 	this->_fd_server = fd;
 }
 
-int	Server::create_server(std::string arg)
-{
-	Server	server;
-	Client	client;
-	int	client_fd;
-	struct sockaddr_in sa;
-	struct sockaddr_storage client_addr;
-	socklen_t addr_size;
-	int	bytes_read;
-	int	buffer[BUFSIZ];
+// int	Server::create_server(std::string arg)
+// {
+// 	Server	server;
+// 	Client	client;
+// 	int	client_fd;
+// 	struct sockaddr_in sa;
+// 	struct sockaddr_storage client_addr;
+// 	socklen_t addr_size;
+// 	int	bytes_read;
+// 	int	buffer[BUFSIZ];
 
-	memset(&sa, 0, sizeof sa);
-	sa.sin_family = AF_INET;
-	sa.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-	sa.sin_port = htons(PORT);
+// 	memset(&sa, 0, sizeof sa);
+// 	sa.sin_family = AF_INET;
+// 	sa.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+// 	sa.sin_port = htons(PORT);
 
-	server._fd_server = socket(sa.sin_family, SOCK_STREAM, 0);
-	if (server._fd_server == -1)
-	{
-		throw(std::invalid_argument("invalid socket\n"));
-		return (1);
-	}
-	server._status = bind(server._fd_server, (struct sockaddr*)&sa, sizeof sa);
-	if (server._status == -1)
-	{
-		throw(std::invalid_argument("invalid server status\n"));
-		return (1);
-	}
-	server._status = listen(server._fd_server, 20);
-	if (server._status == -1)
-	{
-		throw(std::invalid_argument("invalid status\n"));
-		return (1);
-	}
-	addr_size = sizeof(client_addr);
-	client_fd = accept(server._fd_server, (struct sockaddr *)&client_addr, &addr_size);
-	if (client_fd == -1)
-	{
-		throw(std::invalid_argument("invalid client status\n"));
-		return (1);
-	}
-	client.set_fd(client_fd);
-	bytes_read = 1;
-	while (bytes_read >= 0)
-	{
-		bytes_read = recv(client.get_fd(), buffer, BUFSIZ, 0);
-		if (bytes_read == -1)
-		{
-			throw (std::invalid_argument("recv error\n"));
-			return (1);
-		}
-	}
-	std::cout << "closing client socket" << std::endl;
-	close(client.get_fd());
-	std::cout << "closing server socket" << std::endl;
-	close(server._fd_server);
-	return (0);
-}
+// 	server._fd_server = socket(sa.sin_family, SOCK_STREAM, 0);
+// 	if (server._fd_server == -1)
+// 	{
+// 		throw(std::invalid_argument("invalid socket\n"));
+// 		return (1);
+// 	}
+// 	server._status = bind(server._fd_server, (struct sockaddr*)&sa, sizeof sa);
+// 	if (server._status == -1)
+// 	{
+// 		throw(std::invalid_argument("invalid server status\n"));
+// 		return (1);
+// 	}
+// 	server._status = listen(server._fd_server, 20);
+// 	if (server._status == -1)
+// 	{
+// 		throw(std::invalid_argument("invalid status\n"));
+// 		return (1);
+// 	}
+// 	addr_size = sizeof(client_addr);
+// 	client_fd = accept(server._fd_server, (struct sockaddr *)&client_addr, &addr_size);
+// 	if (client_fd == -1)
+// 	{
+// 		throw(std::invalid_argument("invalid client status\n"));
+// 		return (1);
+// 	}
+// 	client.set_fd(client_fd);
+// 	bytes_read = 1;
+// 	while (bytes_read >= 0)
+// 	{
+// 		bytes_read = recv(client.get_fd(), buffer, BUFSIZ, 0);
+// 		if (bytes_read == -1)
+// 		{
+// 			throw (std::invalid_argument("recv error\n"));
+// 			return (1);
+// 		}
+// 	}
+// 	std::cout << "closing client socket" << std::endl;
+// 	close(client.get_fd());
+// 	std::cout << "closing server socket" << std::endl;
+// 	close(server._fd_server);
+// 	return (0);
+// }
 
 /*
 SETSOCKOPT is short for "set socket option", which pretty well sums up what its purpose is -- as a generic way to set various options for a socket. It's designed to be flexible enough to
@@ -242,9 +242,11 @@ int	Server::checkPoll()
 		if (fds[i].fd == serv._fd_server)
 		{
 			//* accepter nouveaux clients
+			serv.newClient();
 			std::cout << "Listening socket is readable\n";
 		}
-		// else
+		else
+			serv.newData();
 		// * receives new data
 	}
 	return (0);
@@ -259,6 +261,7 @@ int	Server::newClient()
 	memset(&sa_client, 0, sizeof sa_client);
 
 	serv._newclientfd = accept(serv._fd_server, NULL, NULL);
+	// * valeur de retour d'accept est le fd client et l relier au vector du client
 	if (serv._newclientfd < 0)
 	{
 		if (errno != EWOULDBLOCK)
@@ -266,7 +269,7 @@ int	Server::newClient()
 		return (1); // ? ou break ?
 	}
 	std::cout << "New incoming connection - %d\n" << serv._newclientfd;
-	fds[5].fd = serv._newclientfd;
+	fds[5].fd = serv._fd_server;
 	fds[5].events = POLLIN;
 	return (0);
 }
@@ -274,6 +277,7 @@ int	Server::newClient()
 int	Server::newData()
 {
 	Server serv;
+	Client cli;
 	int	len;
 	int	buffer[BUFSIZ];
 	struct pollfd fds[FD_COUNT];
@@ -300,7 +304,9 @@ int	Server::newData()
 			std::cout << "connection closed\n";
 						break ;
 		}
+		cli.initClient();
 
 	}
 	// ! ne pas oublier de close tous les fd
 }
+
