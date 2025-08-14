@@ -66,56 +66,83 @@ bool	Server::initServer()
 		std::cout << "listen failed : " << strerror(errno) << std::endl;
 		return (false);
 	}
-	std::cout << "Listen on - " << PORT << std::endl;
+	std::cout << "Listen on FD SERVER: " << _fdserver<< std::endl;
 	// add_epoll(_epollfd, _fdserver, EPOLLIN);
+	fds[0].fd = _fdserver;
+	fds[0].events = POLLIN;
 	_fdcount++;
 	return (true);
 }
 
 bool	Server::checkPoll()
 {
-	memset(fds, 0, sizeof(fds));
-	fds[0].fd = _fdserver;
-	fds[0].events = POLLIN;
+	// memset(fds, 0, sizeof(fds));
 	// struct epoll_event events[_fdcount];
 	std::cout << "POLL FD : " << fds[0].fd << std::endl;
-	std::cout << "FD COUNT : " << _epollfd << std::endl;
 	std::cout << "Waiting on poll()...\n";
-	while (1)
+	while (1) // ? boolean ?
 	{
 		if (poll(fds, _fdcount, -1) <= 0)
 		{
+			// _fdcount++;
 			std::cout << "poll failed : " << strerror(errno) << std::endl;
 			return (false);
 		}
 		for (int i = 0; i < _fdcount; i++)
 		{
-			std::cout << "here\n";
-			if (fds[i].revents || POLLIN)
+			if (fds[i].revents && POLLIN)
 			{
 				if (fds[i].fd == _fdserver)
 				{
 					//* accepter nouveaux clients
-					std::cout << "Listening socket is readable\n";
-					newClient();
+					std::cout << "FDS[I] = " << _fdcount << std::endl;
+					 std::cout << "i = " << i << std::endl;
+					 newClient();
+					//  std::cout << "Listening socket is readable\n";
 				}
 				else
-					newData();
-				// * receives new data
+				{
+					// std::cout << "here\n";
+					newData(i);
+				}
 			}
 		}
 	}
 	return (true);
 }
+
+void	Server::addClients()
+{
+	for (int k = 0; ;k++)
+	{
+		if (fds[k].fd == 0)
+		{
+			std::cout << "K : " << fds[k].fd << std::endl;
+			// ! le remettre a zero car si rempli, boucle infini //removeClient(fd) addClient(fd)
+			fds[k].fd = _newfdclient;
+			fds[k].events = POLLIN | POLLOUT;
+			_fdcount++;
+			break;
+		}
+	}
+}
+
+void	Server::deleteClients(int index)
+{
+	fds[index] = fds[_fdcount - 1];
+	std::cout << "DELETE FDS : " << fds[index].fd << std::endl;
+	_fdcount--;
+	std::cout << "FD COUNT-- " << _fdcount << std::endl;
+}
+
 void	Server::newClient()
 {
 	std::cout << "NEW CLIENT\n";
-	struct sockaddr_in sa_client;
+	// struct sockaddr_in sa_client;
 	struct sockaddr_storage client_addr;
 	socklen_t addr_size = sizeof(client_addr);
 
 	_newfdclient = accept(_fdserver, (struct sockaddr *)&client_addr, &addr_size);
-
 	// * valeur de retour d'accept est le fd client et l relier au vector du client
 	std::cout << "CLIENT FD : " << _newfdclient << std::endl;
 	if (_newfdclient < 0)
@@ -124,26 +151,47 @@ void	Server::newClient()
 			std::cout << "accept failed : " << strerror(errno) << std::endl;
 		// return (false);
 	}
-	std::cout << "New incoming connection = " << _newfdclient;
+	// std::cout << "New incoming connection = " << _newfdclient;
 	// fds[_fdcount].fd = _fdserver;
 	// fds[_fdcount].events = POLLIN;
-	pollfd newClientPollFd;
-	newClientPollFd.fd = _newfdclient;
-	newClientPollFd.events = POLLIN | POLLOUT;
-	clienfds.push_back(newClientPollFd);
+	addClients();
+	// pollfd newClientPollFd;
+	// newClientPollFd.fd = _newfdclient;
+	// newClientPollFd.events = POLLIN | POLLOUT;
+	// clienfds.push_back(newClientPollFd);
+	std::cout << "FD COUNT FTER CLIENT" << _fdcount << std::endl;
 	// ! Ne pas oublier de close ! ne pas close dans le destructeur
 	// return (true);
 }
 
-bool	Server::newData()
+bool	Server::newData(int index)
 {
-	char buffer[200];
+	char buffer[1024];
 	int	read_bytes;
 
-	read_bytes = recv(clienfds[_fdcount].fd, buffer, 200, 0); // * 1er arg clientfd
-	if (read_bytes > 0)
+	std::cout << "RECV here\n";
+	read_bytes = recv(fds[index].fd, buffer, sizeof(buffer), 0); // * 1er arg clientfd
+	std::cout<<"read byte == "<<read_bytes<<std::endl;
+	buffer[read_bytes] = 0;
+	std::cout<<"**********************************************************************************"<<std::endl;
+	printf("%s\n", buffer);
+	std::cout<<"**********************************************************************************"<<std::endl;
+	if (read_bytes <= 0)
 	{
-		std::cout << "OK RECV\n";
+		if (read_bytes == 0)
+		std::cout << "client closed\n";
+		else
+		std::cout << "recv failed : " << strerror(errno) << std::endl;
+		// ? boolean for connection closed = false if error ?
 	}
+	_fdcount++;
+	deleteClients(index);
+	// else
+		//* execute commands
 	return (true);
 }
+
+/*
+* GERER COMMANDES : You must be able to authenticate, set a nickname, a username, join a channel,
+* send and receive private messages using your reference client
+*/

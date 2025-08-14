@@ -6,7 +6,7 @@
 /*   By: doublevv <vv>                              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/08 07:56:24 by doublevv          #+#    #+#             */
-/*   Updated: 2025/08/09 12:09:52 by doublevv         ###   ########.fr       */
+/*   Updated: 2025/08/13 16:53:54 by doublevv         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,7 @@
 int	main(int ac, char **av)
 {
 	Server	server;
-
+	(void)ac;(void)av;
 	// if (ac != 3)
 	// {
 	// 	std::cout << "must have 2 arguments : a port number and a password" << std::endl;
