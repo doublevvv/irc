@@ -14,7 +14,10 @@
 #include <sys/epoll.h>
 #include <arpa/inet.h>
 
+#include "client.hpp"
+
 #define PORT 9000
+class Client;
 
 class Server
 {
@@ -37,6 +40,7 @@ class Server
 	struct sockaddr_in sa; //* structure de donnees de la socket
 	int	_fdcount;
 	std::vector<pollfd> clienfds;
+	std::map<Client*, std::string> mapclient;
 };
 
 #endif

@@ -1,4 +1,5 @@
 #include "../include/Server.hpp"
+#include "../include/client.hpp"
 
 Server::Server() : _fdserver(0), _newfdclient(0), _fdcount(0)
 {
@@ -109,7 +110,7 @@ void	Server::deleteClients(int index)
 void	Server::newClient()
 {
 	std::cout << "NEW CLIENT\n";
-	struct sockaddr_storage client_addr;
+	struct sockaddr_in client_addr;
 	socklen_t addr_size = sizeof(client_addr);
 
 	_newfdclient = accept(_fdserver, (struct sockaddr *)&client_addr, &addr_size);
@@ -122,10 +123,9 @@ void	Server::newClient()
 		// return (false);
 	}
 	addClients();
-	pollfd newClientPollFd;
-	newClientPollFd.fd = _newfdclient;
-	newClientPollFd.events = POLLIN | POLLOUT;
-	clienfds.push_back(newClientPollFd);
+	std::string client_ip = inet_ntoa(client_addr.sin_addr);
+	Client *newclient = new Client(_newfdclient, client_ip);
+	mapclient.insert(std::pair<Client*, std::string>(newclient, client_ip));
 	std::cout << "FD COUNT FTER CLIENT" << _fdcount << std::endl;
 	// ! Ne pas oublier de close ! ne pas close dans le destructeur
 	// return (true);
