@@ -11,8 +11,10 @@
 #include <bits/stdc++.h>
 #include <poll.h>
 #include <vector>
+#include <sys/epoll.h>
+#include <arpa/inet.h>
 
-#define PORT 4242
+#define PORT 9000
 
 class Server
 {
@@ -21,16 +23,20 @@ class Server
 	~Server();
 	bool	initServer();
 	bool	checkPoll();
-	bool	newClient();
-	bool	newData();
+	void	newClient();
+	bool	newData(int);
+	void	add_epoll(int epoll_fd, int fd, int events);
+	void	addClients();
+	void	deleteClients(int i);
 
 	private:
 	int _fdserver;
 	int _newfdclient;
+	int	_epollfd;
 	pollfd fds[SOMAXCONN];
 	struct sockaddr_in sa; //* structure de donnees de la socket
 	int	_fdcount;
-	std::vector<Server> fd_arr;
+	std::vector<pollfd> clienfds;
 };
 
 #endif

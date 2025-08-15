@@ -14,34 +14,12 @@ Server::~Server()
 	//* gerer les fermeture de fd
 }
 
-// void	Server::add_epoll(int epoll_fd, int fd, int events)
-// {
-// 	struct epoll_event poll_event;
-
-// 	memset(&events, 0, sizeof(struct epoll_event));
-// 	poll_event.events = events;
-// 	poll_event.data.fd = fd;
-// 	std::cout << "POLL FD : " << epoll_fd << "\n";
-// 	if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, fd, &poll_event) < 0)
-// 	{
-// 		std::cout << "epoll add failed : " << strerror(errno) << std::endl;
-// 		return ;
-// 	}
-// 	return ;
-// }
-
 bool	Server::initServer()
 {
 	memset(&sa, 0, sizeof(sa));
 	memset((struct sockaddr*) &sa, 0, sizeof(sa));
 	int opt = 1;
 
-	// _epollfd = epoll_create(255);
-	// if (_epollfd < 0)
-	// {
-	// 	std::cout << "epoll create failed : " << strerror(errno) << std::endl;
-	// 	return (false);
-	// }
 	_fdserver = socket(AF_INET, SOCK_STREAM, 0);
 	if (_fdserver  == -1)
 	{
@@ -67,7 +45,6 @@ bool	Server::initServer()
 		return (false);
 	}
 	std::cout << "Listen on FD SERVER: " << _fdserver<< std::endl;
-	// add_epoll(_epollfd, _fdserver, EPOLLIN);
 	fds[0].fd = _fdserver;
 	fds[0].events = POLLIN;
 	_fdcount++;
@@ -76,15 +53,12 @@ bool	Server::initServer()
 
 bool	Server::checkPoll()
 {
-	// memset(fds, 0, sizeof(fds));
-	// struct epoll_event events[_fdcount];
 	std::cout << "POLL FD : " << fds[0].fd << std::endl;
 	std::cout << "Waiting on poll()...\n";
 	while (1) // ? boolean ?
 	{
 		if (poll(fds, _fdcount, -1) <= 0)
 		{
-			// _fdcount++;
 			std::cout << "poll failed : " << strerror(errno) << std::endl;
 			return (false);
 		}
@@ -101,10 +75,7 @@ bool	Server::checkPoll()
 					//  std::cout << "Listening socket is readable\n";
 				}
 				else
-				{
-					// std::cout << "here\n";
 					newData(i);
-				}
 			}
 		}
 	}
@@ -138,7 +109,6 @@ void	Server::deleteClients(int index)
 void	Server::newClient()
 {
 	std::cout << "NEW CLIENT\n";
-	// struct sockaddr_in sa_client;
 	struct sockaddr_storage client_addr;
 	socklen_t addr_size = sizeof(client_addr);
 
@@ -151,14 +121,11 @@ void	Server::newClient()
 			std::cout << "accept failed : " << strerror(errno) << std::endl;
 		// return (false);
 	}
-	// std::cout << "New incoming connection = " << _newfdclient;
-	// fds[_fdcount].fd = _fdserver;
-	// fds[_fdcount].events = POLLIN;
 	addClients();
-	// pollfd newClientPollFd;
-	// newClientPollFd.fd = _newfdclient;
-	// newClientPollFd.events = POLLIN | POLLOUT;
-	// clienfds.push_back(newClientPollFd);
+	pollfd newClientPollFd;
+	newClientPollFd.fd = _newfdclient;
+	newClientPollFd.events = POLLIN | POLLOUT;
+	clienfds.push_back(newClientPollFd);
 	std::cout << "FD COUNT FTER CLIENT" << _fdcount << std::endl;
 	// ! Ne pas oublier de close ! ne pas close dans le destructeur
 	// return (true);
@@ -174,16 +141,27 @@ bool	Server::newData(int index)
 	std::cout<<"read byte == "<<read_bytes<<std::endl;
 	buffer[read_bytes] = 0;
 	std::cout<<"**********************************************************************************"<<std::endl;
-	printf("%s\n", buffer);
+	printf("%s", buffer);
 	std::cout<<"**********************************************************************************"<<std::endl;
 	if (read_bytes <= 0)
 	{
 		if (read_bytes == 0)
-		std::cout << "client closed\n";
+			std::cout << "client closed\n";
 		else
-		std::cout << "recv failed : " << strerror(errno) << std::endl;
+			std::cout << "recv failed : " << strerror(errno) << std::endl;
 		// ? boolean for connection closed = false if error ?
 	}
+	// else
+	// {
+	// 	std::cout << "" << fds[index].fd << " got message : " << buffer << std::endl;
+	// 	std::cout << "LEN = " << sizeof(read_bytes) << std::endl;
+	// 	int rc = send(fds[index].fd, buffer, read_bytes, 0);
+	// 	if (rc < 0)
+	// 	{
+	// 		std::cout << "send failed : " << strerror(errno) << std::endl;
+	// 	}
+	// }
+	// ! ne pas toucher commentaire au desssus
 	_fdcount++;
 	deleteClients(index);
 	// else
