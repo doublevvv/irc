@@ -6,16 +6,16 @@
 /*   By: doublevv <vv>                              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/07 18:53:23 by doublevv          #+#    #+#             */
-/*   Updated: 2025/08/16 12:54:39 by doublevv         ###   ########.fr       */
+/*   Updated: 2025/08/16 14:39:11 by doublevv         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../include/client.hpp"
 
-Client::Client() : _fd_client(0)
-{
+// Client::Client() : _fd_client(0)
+// {
 
-}
+// }
 
 Client::Client(int fd, std::string ip_add) : _fd_client(fd), _ip_add(ip_add)
 {
@@ -41,6 +41,7 @@ Client& Client::operator=(const Client &rhs)
 	_username = rhs._username;
 	_password = rhs._password;
 	_realname = rhs._realname;
+	return (*this);
 
 }
 void Client::setNick(std::string nickname)
@@ -56,7 +57,7 @@ void Client::setPass(std::string password)
 	this->_password = password;
 }
 
-void Client::setPass(std::string realname)
+void Client::setReal(std::string realname)
 {
 	this->_realname = realname;
 }

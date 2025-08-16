@@ -11,6 +11,10 @@ UserCommand::~UserCommand()
 {
 
 }
+bool	UserCommand::getUse()
+{
+	return (this->_used);
+}
 
 void	UserCommand::execute(std::string const &command, std::string const &args)
 {
@@ -40,5 +44,7 @@ void	UserCommand::executeCmd(std::string const &command, std::string usern, int 
 		std::cout << ERR_NEEDMOREPARAMS(usern, command);
 	if (mode != '0')
 		std::cout << ":" << command << "arg mode must be zero\n";
+	if (unused != '*')
+		std::cout << ":" << command << "arg between mode and realname must be a asterix\n";
 	_used = true;
 }

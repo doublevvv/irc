@@ -10,6 +10,7 @@ class UserCommand
 	public:
 	UserCommand();
 	~UserCommand();
+	bool	UserCommand::getUse();
 	void	execute(std::string const &command, std::string const &args);
 	void	executeCmd(std::string const &command, std::string, int, char, std::string);
 
