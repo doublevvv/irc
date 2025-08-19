@@ -7,7 +7,8 @@ void	Server::sigintHandler(int signal)
 	{
 		signalGlobal = 1;
 		std::cout << "Exiting server by using ctrl+c" << std::endl;
-		close (STDIN_FILENO);
+		// close (STDIN_FILENO);
+		// exit(0);
 	}
 	else
 	{

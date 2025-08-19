@@ -6,7 +6,7 @@ Client::Client() : _fd_client(0), _nickname(""), _username(""), _realname(""), _
 	std::cout << "Client constructor called" << std::endl;
 }
 
-Client::Client(int fd, std::string ip_add) : _fd_client(fd), _ip_add(ip_add)
+Client::Client(int fd) : _fd_client(fd)
 {
 
 }
@@ -42,6 +42,10 @@ Client::~Client()
 	std::cout << "Client destructor called" << std::endl;
 }
 
+int const &Client::getFd() const
+{
+	return(this->_fd_client);
+}
 std::string const &Client::getNick() const
 {
 	return (this->_nickname);
@@ -67,6 +71,11 @@ bool Client::getUse()
 	return (this->_used);
 }
 
+std::string const &Client::getIp() const
+{
+	return (this->_ip_add);
+}
+
 void Client::setNick(std::string nickname)
 {
 	this->_nickname = nickname;
@@ -83,6 +92,11 @@ void Client::setPass(std::string password)
 void Client::setReal(std::string realname)
 {
 	this->_realname = realname;
+}
+
+void Client::setIp(std::string ipadd)
+{
+	this->_ip_add = ipadd;
 }
 
 // void Client::sendMessage(std::string const &message)
@@ -186,7 +200,7 @@ void	Client::executeNickCmd(std::string nickname)
 {
 	for (unsigned int i = 0; i < nickname.size(); i++)
 	{
-		if (nickname[i] == ' ' || nickname[i] == ',' || nickname[i] == '*' || nickname[i] == '?' ||
+		if (nickname[1] == ' ' || nickname[i] == ' ' || nickname[i] == ',' || nickname[i] == '*' || nickname[i] == '?' ||
 			nickname[i] == '!' || nickname[i] == '@' || nickname[i] == '.' || nickname[1] == '$' || nickname[i] == ':')
 		{
 			std::cout << "HERE NICKNAME = " << nickname[i] << std::endl;
@@ -245,7 +259,39 @@ bool	Client::checkNickname(std::string nickname)
 	Each user is distinguished from other users by a unique nickname having a maximum length of nine (9) characters.
  */
 
-void	Client::executePrivmsg(std::string const &command, std::string const &args)
-{
-	
-}
+// void	Client::executePrivmsg(std::string const &command, std::string const &args)
+// {
+// 	std::cout << "Entering " << command << " command" << std::endl;
+// 	std::stringstream ss(args);
+// 	std::string target;
+// 	std::string message;
+// 	ss >> target >> message;
+
+// 	std::cout << "" << target << message << std::endl;
+// 	executePrivmsgCmd(target, message);
+// }
+
+// void	Client::executePrivmsgCmd(std::string target, std::string message)
+// {
+// 	// * use send ?
+// 	/*
+// 		 command is used to send private messages between users, as well as to send messages to channels.
+// 		<target> is the nickname of a client or the name of a channel.
+// 	*/
+// 	std::vector<std::string>::iterator it;
+// 	for (it = nckn.begin(); it != nckn.end(); it++)
+// 	{
+// 		std::cout << "nick vector: " << (*it) << std::endl;
+// 		if ((*it) == target)
+// 		{
+// 			// send
+// 		}
+
+// }
+
+// 	std::cout << "LEN = " << sizeof(read_bytes) << std::endl;
+// 	int rc = send(fds[index].fd, buffer, read_bytes, 0);
+// 	if (rc < 0)
+// 	{
+// 		std::cout << "send failed : " << strerror(errno) << std::endl;
+// 	}

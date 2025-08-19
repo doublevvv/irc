@@ -55,18 +55,21 @@ class Server
 		void	deleteClients(int i);
 		bool	executeCommands(char *buffer);
 		void	closeFd();
-		
+		void	sendMsgtoClient(Client &client, std::string msg);
+		void	sendMsgtoChannel(Client &client, std::string msg, std::string channel);
+
 	private:
 		int	_port;
 		std::string	_password;
 		int _fdserver;
 		int _newfdclient;
-		int	_epollfd;
 		pollfd fds[SOMAXCONN];
 		struct sockaddr_in sa; //* structure de donnees de la socket
 		int	_fdcount;
-		// std::vector<pollfd> clienfds;
-		std::map<Client*, std::string> mapclient;
+		// std::map<Client*, std::string> mapclient;
+		//* vector pour acceder au client et tous ses attributs
+		//* map pour chan <std::string, *channel>?
+		std::vector<Client*> idClient;
 };
 
 #endif

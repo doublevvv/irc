@@ -62,7 +62,7 @@ bool	Server::checkPoll()
 {
 	std::cout << "POLL FD : " << fds[0].fd << std::endl;
 	std::cout << "Waiting on poll()...\n";
-	while (1) // ? boolean ?
+	while (signalGlobal == 0) // ? boolean ?
 	{
 		if (poll(fds, _fdcount, -1) <= 0)
 		{
@@ -72,7 +72,8 @@ bool	Server::checkPoll()
 		}
 		for (int i = 0; i < _fdcount; i++)
 		{
-			if (fds[i].revents && POLLIN)
+			std::cout<<"mask? "<<fds[i].revents << " i == "<<i<<" revents == "<<fds[i].revents <<" pollin == " <<POLLIN<<std::endl;
+			if (fds[i].revents | POLLIN)
 			{
 				if (fds[i].fd == _fdserver)
 				{
@@ -141,8 +142,10 @@ void	Server::newClient()
 	}
 	addClients();
 	std::string client_ip = inet_ntoa(client_addr.sin_addr);
-	Client *newclient = new Client(_newfdclient, client_ip);
-	mapclient.insert(std::pair<Client*, std::string>(newclient, client_ip));
+	Client *newclient = new Client(_newfdclient);
+	idClient.push_back(newclient);
+	newclient->setIp(client_ip);
+	std::cout << "IP ADD" << newclient->getIp() << std::endl;
 	std::cout << "FD COUNT FTER CLIENT" << _fdcount << std::endl;
 	// ! Ne pas oublier de close ! ne pas close dans le destructeur
 }
@@ -156,9 +159,9 @@ bool	Server::newData(int index)
 	read_bytes = recv(fds[index].fd, buffer, sizeof(buffer), 0); // * 1er arg clientfd
 	std::cout<<"read byte == "<<read_bytes<<std::endl;
 	buffer[read_bytes] = 0;
-	std::cout<<"**********************************************************************************"<<std::endl;
-	printf("buffer = %s", buffer);
-	std::cout<<"**********************************************************************************"<<std::endl;
+	// std::cout<<"**********************************************************************************"<<std::endl;
+	// std::cout<<"buffer = " << buffer<<std::endl;
+	// std::cout<<"**********************************************************************************"<<std::endl;
 	if (read_bytes <= 0)
 	{
 		if (read_bytes == 0)
@@ -332,3 +335,16 @@ bool Server::executeCommands(char *buffer)
 // 	}
 // 	closeFds();
 // }
+
+// void	Server::sendMsgtoClient(Client &client, std::string msg)
+// {
+// 	if (send(client.getFd(), msg.data(), msg.size(), 0) < 0)
+// 		std::cout << "send failed : " << strerror(errno) << std::endl;
+// }
+
+// void	Server::sendMsgtoChannel(Client &client, std::string msg, std::string channel)
+// {
+// 	std::vector<Client*>::iterator it;
+
+
+// ! ne pas oublier de rediriger les messages d'erreurs au client correspondant

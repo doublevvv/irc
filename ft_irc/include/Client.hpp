@@ -34,15 +34,17 @@ class Client
 {
 	public:
 		Client();
-		Client(int fd, std::string ip_add);
+		Client(int fd);
 		Client(Client const &obj);
 		Client	&operator=(Client const &obj);
 		~Client();
 
+		int const &getFd(void) const;
 		std::string const &getNick() const;
 		std::string const &getUser() const;
 		std::string const &getPass() const;
 		std::string const &getReal() const;
+		std::string const &getIp() const;
 		bool getUse();
 		// void sendMessage(std::string const &message);
 
@@ -50,6 +52,7 @@ class Client
 		void setUser(std::string);
 		void setPass(std::string);
 		void setReal(std::string);
+		void setIp(std::string);
 
 		void	execute(std::string const &command, std::string const &args);
 		void	executeCmd(std::string const &command, std::string, int, char, std::string);
@@ -58,7 +61,7 @@ class Client
 		void	executeNick(std::string const &command, std::string const &args);
 		void	executeNickCmd(std::string nickname);
 		void	executePrivmsg(std::string const &command, std::string const &args);
-		void	excutePrivmsgCmd(std::string target, std::string message);
+		void	executePrivmsgCmd(std::string target, std::string message);
 
 		bool	checkNickname(std::string nickname);
 
@@ -72,6 +75,9 @@ class Client
 		std::vector<std::string> nckn;
 		int _status; //* si admin ou pas (membres ou operator)
 		bool	_used;
+
+		// *buffer d'entree et de sortie
+		//* si \n, erase
 
 };
 
