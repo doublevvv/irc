@@ -55,8 +55,8 @@ class Server
 		void	deleteClients(int i);
 		bool	executeCommands(char *buffer);
 		void	closeFd();
-		void	sendMsgtoClient(Client &client, std::string msg);
-		void	sendMsgtoChannel(Client &client, std::string msg, std::string channel);
+		// void	sendMsgtoClient(Client &client, std::string msg);
+		// void	sendMsgtoChannel(Client &client, std::string msg, std::string channel);
 
 	private:
 		int	_port;

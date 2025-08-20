@@ -72,13 +72,13 @@ bool	Server::checkPoll()
 		}
 		for (int i = 0; i < _fdcount; i++)
 		{
-			std::cout<<"mask? "<<fds[i].revents << " i == "<<i<<" revents == "<<fds[i].revents <<" pollin == " <<POLLIN<<std::endl;
-			if (fds[i].revents | POLLIN)
+			// std::cout<<"mask? "<<fds[i].revents << " i == "<<i<<" revents == "<<fds[i].revents <<" pollin == " <<POLLIN<<std::endl;
+			if (fds[i].revents & POLLIN)
 			{
 				if (fds[i].fd == _fdserver)
 				{
 					//* accepter nouveaux clients
-					std::cout << "FDS[I] = " << _fdcount << std::endl;
+					std::cout << "FDS[I] = " << fds[i].fd << std::endl;
 					 std::cout << "i = " << i << std::endl;
 					 newClient();
 					 std::cout << "Listening socket is readable\n";
@@ -262,6 +262,30 @@ bool Server::executeCommands(char *buffer)
 			}
 			client.executeNick(commandName, args);
 			break ;
+		case PRIVMSG:
+			std::cout << "PRIVMSG FOUND" << std::endl;
+			args = input.substr(5, input.length());
+			std::cout << "ARGS: " << args << std::endl;
+			if (args.empty())
+			{
+				std::cerr << "Error: Missing arguments" << std::endl;
+				std::cout << ERR_NONICKNAMEGIVEN;
+				return (false);
+			}
+			client.executePrivmsg(commandName, args);
+			break ;
+		case CAP:
+			std::cout << "CAP FOUND" << std::endl;
+			args = input.substr(4, input.length());
+			std::cout << "ARGS: " << args << std::endl;
+			if (args.empty())
+			{
+				std::cerr << "Error: Missing arguments" << std::endl;
+				std::cout << ERR_NONICKNAMEGIVEN;
+				return (false);
+			}
+			client.executeCap(commandName, args);
+			break ;
 		// case KICK:
 		// 	if (args.empty())
 		// 	{
@@ -336,15 +360,10 @@ bool Server::executeCommands(char *buffer)
 // 	closeFds();
 // }
 
-// void	Server::sendMsgtoClient(Client &client, std::string msg)
-// {
-// 	if (send(client.getFd(), msg.data(), msg.size(), 0) < 0)
-// 		std::cout << "send failed : " << strerror(errno) << std::endl;
-// }
-
 // void	Server::sendMsgtoChannel(Client &client, std::string msg, std::string channel)
 // {
 // 	std::vector<Client*>::iterator it;
-
+// 	for (it = idClient[channel].begin(); )
+// }
 
 // ! ne pas oublier de rediriger les messages d'erreurs au client correspondant

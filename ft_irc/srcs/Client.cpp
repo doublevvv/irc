@@ -246,6 +246,9 @@ bool	Client::checkNickname(std::string nickname)
 			return (false);
 		}
 	}
+	std::cout << RPL_WELCOME(nickname, getUser(), getIp());
+	std::cout << RPL_YOURHOST(nickname);
+	// std::cout << RPL_CREATED(nickname); time ?
 	return (true);
 }
 
@@ -259,35 +262,58 @@ bool	Client::checkNickname(std::string nickname)
 	Each user is distinguished from other users by a unique nickname having a maximum length of nine (9) characters.
  */
 
-// void	Client::executePrivmsg(std::string const &command, std::string const &args)
-// {
-// 	std::cout << "Entering " << command << " command" << std::endl;
-// 	std::stringstream ss(args);
-// 	std::string target;
-// 	std::string message;
-// 	ss >> target >> message;
+void	Client::executePrivmsg(std::string const &command, std::string const &args)
+{
+	std::cout << "Entering " << command << " command" << std::endl;
+	std::stringstream ss(args);
+	std::string target;
+	std::string message;
+	ss >> target >> message;
 
-// 	std::cout << "" << target << message << std::endl;
-// 	executePrivmsgCmd(target, message);
-// }
+	std::cout << "" << target << "-" << message << std::endl;
+	// 	for (int i = 0; i < idClient.size(); i++)
+	// {
+	// 	std::cout << "NICK = " << idClient[i]->getNick() << std::endl;
+	// }
+	executePrivmsgCmd(target, message);
+}
 
-// void	Client::executePrivmsgCmd(std::string target, std::string message)
-// {
-// 	// * use send ?
-// 	/*
-// 		 command is used to send private messages between users, as well as to send messages to channels.
-// 		<target> is the nickname of a client or the name of a channel.
-// 	*/
-// 	std::vector<std::string>::iterator it;
-// 	for (it = nckn.begin(); it != nckn.end(); it++)
-// 	{
-// 		std::cout << "nick vector: " << (*it) << std::endl;
-// 		if ((*it) == target)
-// 		{
-// 			// send
-// 		}
+void	Client::executePrivmsgCmd(std::string target, std::string message)
+{
+	// * use send ?
+	/*
+		 command is used to send private messages between users, as well as to send messages to channels.
+		<target> is the nickname of a client or the name of a channel.
+	*/
+	std::vector<std::string>::iterator it;
+	for (it = nckn.begin(); it != nckn.end(); it++)
+	{
+		std::cout << "nick vector: " << (*it) << std::endl;
+		if ((*it) == target)
+		{
+			sendMsgtoClient(getFd(), message);
+		}
+	}
+}
 
-// }
+void	Client::sendMsgtoClient(int fd, std::string msg)
+{
+	if (send(fd, msg.data(), msg.size(), 0) < 0)
+		std::cout << "send failed : " << strerror(errno) << std::endl;
+}
+
+void	Client::executeCap(std::string const &command, std::string const &args)
+{
+	std::cout << "Entering " << command << " command" << std::endl;
+	std::stringstream ss(args);
+	std::string subcmd;
+	ss >> subcmd;
+
+	if (subcmd == "LS")
+		std::cout << "CAP * LS: KICK INVITE TOPIC MODE\n";
+	// ! propre a IRSSI !
+}
+
 
 // 	std::cout << "LEN = " << sizeof(read_bytes) << std::endl;
 // 	int rc = send(fds[index].fd, buffer, read_bytes, 0);

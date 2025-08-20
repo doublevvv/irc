@@ -102,7 +102,7 @@ int Channel::isChannelCommand(const char *str)
 	std::cout << "STR === " << str << std::endl;
 	int			i;
 	int			channelCommand_found;
-	const char	*channelCommand[] = {"USER", "PASS", "NICK", "KICK", "INVITE", "MODE", "TOPIC", NULL};
+	const char	*channelCommand[] = {"USER", "PASS", "NICK", "PRIVMSG", "CAP", "KICK", "INVITE", "MODE", "TOPIC", NULL};
 
 	i = 0;
 	channelCommand_found = -1;

@@ -25,7 +25,9 @@
 enum e_userCommands {
 	USER,
 	PASS,
-	NICK
+	NICK,
+	PRIVMSG,
+	CAP
 };
 
 class Channel;
@@ -62,8 +64,10 @@ class Client
 		void	executeNickCmd(std::string nickname);
 		void	executePrivmsg(std::string const &command, std::string const &args);
 		void	executePrivmsgCmd(std::string target, std::string message);
+		void	executeCap(std::string const &command, std::string const &args);
 
 		bool	checkNickname(std::string nickname);
+		void	sendMsgtoClient(int fd, std::string msg);
 
 	private:
 		int _fd_client;
