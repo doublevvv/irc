@@ -6,8 +6,11 @@ SOURCES = srcs/main.cpp \
 		srcs/Client.cpp	\
 		srcs/Channel.cpp	\
 		srcs/Signal.cpp	\
-		srcs/commands/AChannelCommand.cpp	\
-		srcs/commands/KickCommand.cpp
+		srcs/commands/AChannel.cpp	\
+		srcs/commands/ACommand.cpp	\
+		srcs/commands/Pass.cpp	\
+		srcs/commands/User.cpp	\
+		srcs/commands/Nick.cpp	\
 
 SRCS = $(addprefix $(OBJ_DIR)/, $(SOURCES))
 

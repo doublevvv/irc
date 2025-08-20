@@ -53,7 +53,7 @@ class Server
 		void	add_epoll(int epoll_fd, int fd, int events);
 		void	addClients();
 		void	deleteClients(int i);
-		bool	executeCommands(char *buffer);
+		bool	executeUserCommands(char *buffer);
 		void	closeFd();
 		// void	sendMsgtoClient(Client &client, std::string msg);
 		// void	sendMsgtoChannel(Client &client, std::string msg, std::string channel);

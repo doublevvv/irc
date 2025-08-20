@@ -55,6 +55,7 @@ class Client
 		void setPass(std::string);
 		void setReal(std::string);
 		void setIp(std::string);
+		void setUse(bool used);
 
 		void	execute(std::string const &command, std::string const &args);
 		void	executeCmd(std::string const &command, std::string, int, char, std::string);
@@ -68,6 +69,7 @@ class Client
 
 		bool	checkNickname(std::string nickname);
 		void	sendMsgtoClient(int fd, std::string msg);
+		int	isClientCommand(const char *str);
 
 	private:
 		int _fd_client;

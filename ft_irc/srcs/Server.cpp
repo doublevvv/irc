@@ -1,8 +1,12 @@
 #include "../include/Server.hpp"
 #include "../include/Client.hpp"
+#include "../include/ACommand.hpp"
+#include "../include/AChannel.hpp"
+#include "../include/Pass.hpp"
+#include "../include/User.hpp"
+#include "../include/Nick.hpp"
+#include "../include/Kick.hpp"
 #include "../include/Channel.hpp"
-#include "../include/AChannelCommand.hpp"
-// #include "../include/UserCommand.hpp"
 #include "../include/Errors.hpp"
 #include "../include/Replies.hpp"
 
@@ -187,7 +191,7 @@ bool	Server::newData(int index)
 	else
 	{
 		// EXECUTE COMMANDS
-		if (!executeCommands(buffer))
+		if (!executeUserCommands(buffer))
 		{
 			return (false);
 		}
@@ -197,7 +201,8 @@ bool	Server::newData(int index)
 	return (true);
 }
 
-bool Server::executeCommands(char *buffer)
+
+bool Server::executeUserCommands(char *buffer)
 {
 	std::string input(buffer);
 	std::stringstream ss(input);
@@ -213,133 +218,192 @@ bool Server::executeCommands(char *buffer)
 		return (false);
 	}
 
-	Channel *channel = NULL;
-	int cmdType = channel->isChannelCommand(commandName.c_str());
+	Client	client;
+	int cmdType = client.isClientCommand(commandName.c_str());
 	if (cmdType == -1)
 	{
 		std::cerr << "Error: command " << commandName << " does not exist" << std::endl;
 		return (false);
 	}
 
-	Client client;
-	// AChannelCommand *cmd = NULL;
+	ACommand *userCmd = NULL;
 	switch (cmdType)
 	{
-		case USER:
-			args = input.substr(5, input.length());
-			std::cout << "ARGS: " << args << std::endl;
-			if (args.empty())
-			{
-				std::cerr << "Error: Missing arguments" << std::endl;
-				std::cout << ERR_NEEDMOREPARAMS(NULL) << std::endl;
-				return (false);
-			}
-			client.execute(commandName, args);
-			break ;
-
 		case PASS:
 			std::cout << "PASS FOUND" << std::endl;
 			args = input.substr(5, input.length());
 			std::cout << "ARGS: " << args << std::endl;
-			if (args.empty())
-			{
-				std::cerr << "Error: Missing arguments" << std::endl;
-				std::cout << ERR_NEEDMOREPARAMS(NULL) << std::endl;
-				return (false);
-			}
-			client.executePWD(commandName, args);
+			userCmd = new Pass();
+			userCmd->execute(commandName, client, args);
+			break ;
+
+		case USER:
+			std::cout << "USER FOUND" << std::endl;
+			args = input.substr(5, input.length());
+			std::cout << "ARGS: " << args << std::endl;
+			userCmd = new User();
+			userCmd->execute(commandName, client, args);
 			break ;
 
 		case NICK:
 			std::cout << "NICK FOUND" << std::endl;
 			args = input.substr(5, input.length());
 			std::cout << "ARGS: " << args << std::endl;
-			if (args.empty())
-			{
-				std::cerr << "Error: Missing arguments" << std::endl;
-				std::cout << ERR_NONICKNAMEGIVEN;
-				return (false);
-			}
-			client.executeNick(commandName, args);
+			userCmd = new Nick();
+			userCmd->execute(commandName, client, args);
 			break ;
-		case PRIVMSG:
-			std::cout << "PRIVMSG FOUND" << std::endl;
-			args = input.substr(5, input.length());
-			std::cout << "ARGS: " << args << std::endl;
-			if (args.empty())
-			{
-				std::cerr << "Error: Missing arguments" << std::endl;
-				std::cout << ERR_NONICKNAMEGIVEN;
-				return (false);
-			}
-			client.executePrivmsg(commandName, args);
-			break ;
-		case CAP:
-			std::cout << "CAP FOUND" << std::endl;
-			args = input.substr(4, input.length());
-			std::cout << "ARGS: " << args << std::endl;
-			if (args.empty())
-			{
-				std::cerr << "Error: Missing arguments" << std::endl;
-				std::cout << ERR_NONICKNAMEGIVEN;
-				return (false);
-			}
-			client.executeCap(commandName, args);
-			break ;
-		// case KICK:
-		// 	if (args.empty())
-		// 	{
-		// 		std::cerr << "Error: Missing arguments" << std::endl;
-		// 		//std::cout << ERR_NEEDMOREPARAMS(nickname, command) << std::endl;
-		// 		//return (false);
-		// 	}
-		// 	args = input.substr(5, input.length());
-		// 	std::cout << "args: " << args << std::endl;
-		// 	//cmd = new KickCommand();
-		// 	cmd->execute(commandName, args);
-		// 	break ;
-		// 	case INVITE:
-		// 		if (args.empty())
-		// 		{
-		// 			std::cerr << "Error: Missing arguments" << std::endl;
-		// 			// std::cout << ERR_NEEDMOREPARAMS(nickname, command) << std::endl;
-		// 			return (false);
-		// 		}
-		// 		args = input.substr(7, input.length());
-		// 		std::cout << "args: " << args << std::endl;
-		// 		cmd = new InviteCommand();
-		// 		cmd->execute(commandName, args);
-		// 		break ;
-		// 	case TOPIC:
-		// 		if (args.empty())
-		// 		{
-		// 			std::cerr << "Error: Missing arguments" << std::endl;
-		// 			// std::cout << ERR_NEEDMOREPARAMS(nickname, command) << std::endl;
-		// 			return (false);
-		// 		}
-		// 		args = input.substr(6, input.length());
-		// 		std::cout << "args: " << args << std::endl;
-		// 		cmd = new TopicCommand();
-		// 		cmd->execute(commandName, args);
-		// 		break ;
-		// 	case MODE:
-		// 		if (args.empty())
-		// 		{
-		// 			std::cerr << "Error: Missing arguments" << std::endl;
-		// 			// std::cout << ERR_NEEDMOREPARAMS(nickname, command) << std::endl;
-		// 			return (false);
-		// 		}
-		// 		args = input.substr(5, input.length());
-		// 		std::cout << "args: " << args << std::endl;
-		// 		cmd = new ModeCommand();
-		// 		cmd->execute(commandName, args);
-		// 		break ;
-		// 	default:
-		// 		std::cerr << "Error: command " << commandName << " does not exist" << std::endl;
-		// 		//return (false);
+
+		default:
+			std::cerr << "Error: command " << commandName << " does not exist" << std::endl;
+			return (false);
 	}
+	//executeChannelCommands(buffer, client);
 	return (true);
 }
+
+// bool Server::executeCommands(char *buffer)
+// {
+// 	std::string input(buffer);
+// 	std::stringstream ss(input);
+// 	std::cout << "INPUT: " << input << std::endl;
+// 	std::string commandName;
+// 	std::string args;
+// 	ss >> commandName;
+// 	std::cout << "command: " << commandName << std::endl;
+// 	if (ss.fail())
+// 	{
+// 		std::cerr << "Error: stringstream failed" << std::endl;
+// 		ss.clear();
+// 		return (false);
+// 	}
+
+// 	Channel *channel = NULL;
+// 	int cmdType = channel->isChannelCommand(commandName.c_str());
+// 	if (cmdType == -1)
+// 	{
+// 		std::cerr << "Error: command " << commandName << " does not exist" << std::endl;
+// 		return (false);
+// 	}
+
+// 	Client client;
+// 	// AChannelCommand *cmd = NULL;
+// 	switch (cmdType)
+// 	{
+// 		case USER:
+// 			args = input.substr(5, input.length());
+// 			std::cout << "ARGS: " << args << std::endl;
+// 			if (args.empty())
+// 			{
+// 				std::cerr << "Error: Missing arguments" << std::endl;
+// 				std::cout << ERR_NEEDMOREPARAMS(NULL) << std::endl;
+// 				return (false);
+// 			}
+// 			client.execute(commandName, args);
+// 			break ;
+
+// 		case PASS:
+// 			std::cout << "PASS FOUND" << std::endl;
+// 			args = input.substr(5, input.length());
+// 			std::cout << "ARGS: " << args << std::endl;
+// 			if (args.empty())
+// 			{
+// 				std::cerr << "Error: Missing arguments" << std::endl;
+// 				std::cout << ERR_NEEDMOREPARAMS(NULL) << std::endl;
+// 				return (false);
+// 			}
+// 			client.executePWD(commandName, args);
+// 			break ;
+
+// 		case NICK:
+// 			std::cout << "NICK FOUND" << std::endl;
+// 			args = input.substr(5, input.length());
+// 			std::cout << "ARGS: " << args << std::endl;
+// 			if (args.empty())
+// 			{
+// 				std::cerr << "Error: Missing arguments" << std::endl;
+// 				std::cout << ERR_NONICKNAMEGIVEN;
+// 				return (false);
+// 			}
+// 			client.executeNick(commandName, args);
+// 			break ;
+// 		case PRIVMSG:
+// 			std::cout << "PRIVMSG FOUND" << std::endl;
+// 			args = input.substr(5, input.length());
+// 			std::cout << "ARGS: " << args << std::endl;
+// 			if (args.empty())
+// 			{
+// 				std::cerr << "Error: Missing arguments" << std::endl;
+// 				std::cout << ERR_NONICKNAMEGIVEN;
+// 				return (false);
+// 			}
+// 			client.executePrivmsg(commandName, args);
+// 			break ;
+// 		case CAP:
+// 			std::cout << "CAP FOUND" << std::endl;
+// 			args = input.substr(4, input.length());
+// 			std::cout << "ARGS: " << args << std::endl;
+// 			if (args.empty())
+// 			{
+// 				std::cerr << "Error: Missing arguments" << std::endl;
+// 				std::cout << ERR_NONICKNAMEGIVEN;
+// 				return (false);
+// 			}
+// 			client.executeCap(commandName, args);
+// 			break ;
+// 		// case KICK:
+// 		// 	if (args.empty())
+// 		// 	{
+// 		// 		std::cerr << "Error: Missing arguments" << std::endl;
+// 		// 		//std::cout << ERR_NEEDMOREPARAMS(nickname, command) << std::endl;
+// 		// 		//return (false);
+// 		// 	}
+// 		// 	args = input.substr(5, input.length());
+// 		// 	std::cout << "args: " << args << std::endl;
+// 		// 	//cmd = new KickCommand();
+// 		// 	cmd->execute(commandName, args);
+// 		// 	break ;
+// 		// 	case INVITE:
+// 		// 		if (args.empty())
+// 		// 		{
+// 		// 			std::cerr << "Error: Missing arguments" << std::endl;
+// 		// 			// std::cout << ERR_NEEDMOREPARAMS(nickname, command) << std::endl;
+// 		// 			return (false);
+// 		// 		}
+// 		// 		args = input.substr(7, input.length());
+// 		// 		std::cout << "args: " << args << std::endl;
+// 		// 		cmd = new InviteCommand();
+// 		// 		cmd->execute(commandName, args);
+// 		// 		break ;
+// 		// 	case TOPIC:
+// 		// 		if (args.empty())
+// 		// 		{
+// 		// 			std::cerr << "Error: Missing arguments" << std::endl;
+// 		// 			// std::cout << ERR_NEEDMOREPARAMS(nickname, command) << std::endl;
+// 		// 			return (false);
+// 		// 		}
+// 		// 		args = input.substr(6, input.length());
+// 		// 		std::cout << "args: " << args << std::endl;
+// 		// 		cmd = new TopicCommand();
+// 		// 		cmd->execute(commandName, args);
+// 		// 		break ;
+// 		// 	case MODE:
+// 		// 		if (args.empty())
+// 		// 		{
+// 		// 			std::cerr << "Error: Missing arguments" << std::endl;
+// 		// 			// std::cout << ERR_NEEDMOREPARAMS(nickname, command) << std::endl;
+// 		// 			return (false);
+// 		// 		}
+// 		// 		args = input.substr(5, input.length());
+// 		// 		std::cout << "args: " << args << std::endl;
+// 		// 		cmd = new ModeCommand();
+// 		// 		cmd->execute(commandName, args);
+// 		// 		break ;
+// 		// 	default:
+// 		// 		std::cerr << "Error: command " << commandName << " does not exist" << std::endl;
+// 		// 		//return (false);
+// 	}
+// 	return (true);
+// }
 /*
 * GERER COMMANDES : You must be able to authenticate, set a nickname, a username, join a channel,
 * send and receive private messages using your reference client

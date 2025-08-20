@@ -1,31 +1,46 @@
-#include "../../include/KickCommand.hpp"
+#include "../../include/Kick.hpp"
 
-KickCommand::KickCommand()
+Kick::Kick()
 {
 	;
 }
 
-KickCommand::KickCommand(KickCommand const &obj)
+Kick::Kick(Kick const &obj)
 {
 	(void)obj;
 }
 
-KickCommand& KickCommand::operator=(KickCommand const &obj)
+Kick& Kick::operator=(Kick const &obj)
 {
 	(void)obj;
 	return (*this);
 }
 
-KickCommand::~KickCommand()
+Kick::~Kick()
 {
 	;
 }
 
-void KickCommand::execute(std::string const &command, std::string const &args)
+void Kick::execute(std::string const &command, Client &client, Channel &channel, std::string const &args)
 {
 	std::cout << "Entering " << command << " command" << std::endl;
-
 	std::stringstream ss(args);
+	std::string word;
+	int count = 0;
+
+	while (ss >> word)
+	{
+		count++;
+	}
+	if (count < 2 || count > 3)
+	{
+		std::cout << ERR_NEEDMOREPARAMS(client.getNick());
+		return ;
+	}
+
+	ss.clear();
+	ss.seekg(0);
+
 	std::string channelName;
 	std::string user;
 	std::string comment;
@@ -35,8 +50,6 @@ void KickCommand::execute(std::string const &command, std::string const &args)
 	std::cout << "user: " << user << std::endl;
 	std::cout << "comment: " << comment << std::endl;
 
-	Channel chan;
-	Channel &channel = chan.getChannelByName(channelName);
 	//ERR_NOSUCHCHANNEL(user, channel.getName()); cf CHANNEL.cpp
 	// Channel *channel = Channel::getChannelByName(channelName);
 	// if (!channel)
@@ -45,23 +58,13 @@ void KickCommand::execute(std::string const &command, std::string const &args)
 		// std::cout << ERR_NOSUCHCHANNEL(user, channelName) << std::endl;
 		// return;
 	// }
-	executeCmd(channel, user, comment);
-}
-
-void KickCommand::executeCmd(Channel& channel, std::string const &user, std::string const &args)
-{
-	if (user.empty())
-	{
-		std::cerr << "Error: no user to kick" << std::endl;
-		return;
-	}
 	if (!channel.isClientInChannel(user))
 	{
 		std::cerr << "Error: user " << user << " not in channel" << std::endl;
 		std::cerr << ERR_USERNOTINCHANNEL(user, channel.getName()) << std::endl;
 		return ;
 	}
-	channel.removeClient(user);
+	//channel.removeClient(user);
 	// std::cout << user << " kicked " << user << " from " << channel.getName() << std::endl;
 	if (args == "")
 	{

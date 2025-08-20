@@ -1,27 +1,27 @@
-// #include "../../include/TopicCommand.hpp"
+// #include "../../include/Topic.hpp"
 
-// TopicCommand::TopicCommand()
+// Topic::Topic()
 // {
 // 	;
 // }
 
-// TopicCommand::TopicCommand(TopicCommand const &obj)
+// Topic::Topic(Topic const &obj)
 // {
 // 	(void)obj;
 // }
 
-// TopicCommand& TopicCommand::operator=(TopicCommand const &obj)
+// Topic& Topic::operator=(Topic const &obj)
 // {
 // 	(void)obj;
 // 	return (*this);
 // }
 
-// TopicCommand::~TopicCommand()
+// Topic::~Topic()
 // {
 // 	;
 // }
 
-// void TopicCommand::execute(std::string const &command, std::string const &args)
+// void Topic::execute(std::string const &command, std::string const &args)
 // {
 // 	std::cout << "Entering " << command << " command" << std::endl;
 
@@ -38,7 +38,7 @@
 // 	executeCmd(channel, "", topicSubject);
 // }
 
-// void TopicCommand::executeCmd(Channel& channel, std::string const &user, std::string const &args)
+// void Topic::executeCmd(Channel& channel, std::string const &user, std::string const &args)
 // {
 // 	(void) user;
 // 	std::cout << RPL_TOPIC(user(nickname), channel, args) << std::endl; // Ou ?

@@ -1,27 +1,27 @@
-// #include "../../include/ModeCommand.hpp"
+// #include "../../include/Mode.hpp"
 
-// ModeCommand::ModeCommand()
+// Mode::Mode()
 // {
 // 	;
 // }
 
-// ModeCommand::ModeCommand(ModeCommand const &obj)
+// Mode::Mode(Mode const &obj)
 // {
 // 	(void)obj;
 // }
 
-// ModeCommand& ModeCommand::operator=(ModeCommand const &obj)
+// Mode& Mode::operator=(Mode const &obj)
 // {
 // 	(void)obj;
 // 	return (*this);
 // }
 
-// ModeCommand::~ModeCommand()
+// Mode::~Mode()
 // {
 // 	;
 // }
 
-// void ModeCommand::execute(std::string const &command, std::string const &args)
+// void Mode::execute(std::string const &command, Client &client, Channel &channel, std::string const &args)
 // {
 // 	std::cout << "Entering " << command << " command" << std::endl;
 
@@ -40,7 +40,7 @@
 // 	executeCmd(channel, "", arg);
 // }
 
-// void ModeCommand::executeCmd(Channel& channel, std::string const &user, std::string const &args)
+// void Mode::executeCmd(Channel& channel, std::string const &user, std::string const &args)
 // {
 // 	(void)channel;
 // 	(void)user;

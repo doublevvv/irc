@@ -99,11 +99,37 @@ void Client::setIp(std::string ipadd)
 	this->_ip_add = ipadd;
 }
 
+void Client::setUse(bool used)
+{
+	this->_used = used;
+}
+
 // void Client::sendMessage(std::string const &message)
 // {
 // 	std::string formatted = message + "\r\n";
 // 	write(_fd, formatted.c_str(), formatted.size());
 // }
+
+int Client::isClientCommand(const char *str)
+{
+	int			i;
+	int			clientCommand_found;
+	const char	*clientCommand[] = {"USER", "PASS", "NICK", NULL};
+
+	i = 0;
+	clientCommand_found = -1;
+	while (clientCommand[i] != NULL)
+	{
+		if (strcmp(clientCommand[i], str) == 0)
+		{
+			clientCommand_found = i;
+			std::cout << "command found: " << clientCommand_found << std::endl;
+			break ;
+		}
+		i++;
+	}
+	return (clientCommand_found);
+}
 
 void	Client::execute(std::string const &command, std::string const &args)
 {

@@ -1,26 +1,27 @@
-// #include "../../include/InviteCommand.hpp"
+// #include "../../include/Invite.hpp"
 
-// InviteCommand::InviteCommand()
+// Invite::Invite()
 // {
 // 	;
 // }
-// InviteCommand::InviteCommand(InviteCommand const &obj)
+// Invite::Invite(Invite const &obj)
 // {
 // 	(void)obj;
 // }
 
-// InviteCommand& InviteCommand::operator=(InviteCommand const &obj)
+// Invite& Invite::operator=(Invite const &obj)
 // {
 // 	(void)obj;
 // 	return (*this);
 // }
 
-// InviteCommand::~InviteCommand()
+// Invite::~Invite()
 // {
 // 	;
 // }
 
-// void InviteCommand::execute(std::string const &command, std::string const &args)
+// void Invite::execute(std::string const &command, Client &client, Channel &channel, std::string const &args)
+
 // {
 // 	std::cout << "Entering " << command << " command" << std::endl;
 
@@ -37,7 +38,7 @@
 // 	executeCmd(channel, nickname, "");
 // }
 
-// void InviteCommand::executeCmd(Channel& channel, std::string const &user, std::string const &args)
+// void Invite::executeCmd(Channel& channel, std::string const &user, std::string const &args)
 // {
 // 	(void) args;
 // 	if (user.empty())
