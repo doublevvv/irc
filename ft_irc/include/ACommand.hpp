@@ -3,6 +3,7 @@
 
 #include "Client.hpp"
 #include "Channel.hpp"
+#include "Server.hpp"
 
 class Client;
 
@@ -16,7 +17,8 @@ class ACommand
 		ACommand	&operator=(ACommand const &obj);
 		virtual ~ACommand();
 
-		virtual void execute(std::string const &command, Client &client, const std::string &args) = 0;
+		virtual void execute(Server &server, std::string const &command, std::vector<Client*>::iterator it, std::string const &args) = 0;
+
 };
 
 #endif

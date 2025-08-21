@@ -12,7 +12,7 @@
 
 bool	signalGlobal = 0;
 
-Server::Server() : _fdserver(0), _newfdclient(0), _fdcount(0)
+Server::Server() : _fdserver(0), _newfdclient(0), _fdcount(0), idClient()
 {
 
 }
@@ -22,8 +22,9 @@ Server::~Server()
 	//* gerer les fermeture de fd
 }
 
-void	Server::initServer()
+void	Server::initServer(Server &server)
 {
+	(void)server;
 	memset(&sa, 0, sizeof(sa));
 	// memset((struct sockaddr*) &sa, 0, sizeof(sa));
 	int opt = 1;
@@ -59,10 +60,11 @@ void	Server::initServer()
 	memset(&fds, 0, sizeof(fds));
 	fds[0].fd = _fdserver;
 	fds[0].events = POLLIN;
+	_fdcount++;
 }
 
 
-bool Server::checkPoll()
+bool Server::checkPoll(Server &server)
 {
 	std::cout << "POLL FD : " << fds[0].fd << std::endl;
 	std::cout << "Waiting on poll()...\n";
@@ -93,9 +95,6 @@ bool Server::checkPoll()
 			read_bytes = recv((*it)->getFd(), buffer, sizeof(buffer), 0); // * 1er arg clientfd
 			std::cout<<"read byte == "<<read_bytes<<std::endl;
 			buffer[read_bytes] = 0;
-			// std::cout<<"**********************************************************************************"<<std::endl;
-			// std::cout<<"buffer = " << buffer<<std::endl;
-			// std::cout<<"**********************************************************************************"<<std::endl;
 			if (read_bytes <= 0)
 			{
 				if (read_bytes == 0)
@@ -107,7 +106,7 @@ bool Server::checkPoll()
 				}
 				// ? boolean for connection closed = false if error ?
 			}
-			// excute
+			executeCommands(buffer, server, it);
 		}
 	}
 	return (true);
@@ -172,113 +171,86 @@ void	Server::newClient()
 	// ! Ne pas oublier de close ! ne pas close dans le destructeur
 }
 
-bool	Server::newData(int index)
+int Server::isCommand(const char *str)
 {
-	// else
-	// {
-	// 	std::cout << "" << fds[index].fd << " got message : " << buffer << std::endl;
-	// 	std::cout << "LEN = " << sizeof(read_bytes) << std::endl;
-	// 	int rc = send(fds[index].fd, buffer, read_bytes, 0);
-	// 	if (rc < 0)
-	// 	{
-	// 		std::cout << "send failed : " << strerror(errno) << std::endl;
-	// 	}
-	// }
-	// ! ne pas toucher commentaire au desssus
-	// else
-	// {
-	// 	// EXECUTE COMMANDS
-	// 	if (!executeUserCommands(buffer))
-	// 	{
-	// 		return (false);
-	// 	}
-	// }
+    int            i;
+    int            commandFound;
+    const char    *command[] = {"PASS", "USER", "NICK", "PRIVMSG", "CAP", "KICK", "INVITE", "MODE", "TOPIC", NULL};
+
+    i = 0;
+    commandFound = -1;
+    while (command[i] != NULL)
+    {
+        if (strcmp(command[i], str) == 0)
+        {
+            commandFound = i;
+            std::cout << "command found: " << commandFound << std::endl;
+            break ;
+        }
+        i++;
+    }
+    return (commandFound);
+}
+
+bool Server::executeCommands(char *buffer, Server &server, std::vector<Client*>::iterator it)
+{
+	(void)server;
+	std::string input(buffer);
+	std::stringstream ss(input);
+	std::cout << "INPUT: " << input << std::endl;
+	std::string commandName;
+	std::string args;
+	ss >> commandName;
+	std::cout << "command: " << commandName << std::endl;
+	if (ss.fail())
+	{
+		std::cerr << "Error: stringstream failed" << std::endl;
+		ss.clear();
+		return (false);
+	}
+	int cmdType = isCommand(commandName.c_str());
+	if (cmdType == -1)
+	{
+		std::cerr << "Error: command " << commandName << " does not exist" << std::endl;
+		return (false);
+	}
+	ACommand *userCmd = NULL;
+	switch (cmdType)
+	{
+		case PASS:
+			std::cout << "PASS FOUND" << std::endl;
+			args = input.substr(5, input.length());
+			std::cout << "ARGS: " << args << std::endl;
+			userCmd = new Pass();
+			userCmd->execute(server,commandName, it, args);
+			break ;
+
+		case USER:
+			std::cout << "FD USER = " << (*it)->getFd() << std::endl;
+			std::cout << "USER FOUND" << std::endl;
+			args = input.substr(5, input.length());
+			std::cout << "ARGS: " << args << std::endl;
+			userCmd = new User();
+			userCmd->execute(server, commandName, it, args);
+			break ;
+
+		case NICK:
+			std::cout << "NICK FOUND" << std::endl;
+			args = input.substr(5, input.length());
+			std::cout << "ARGS: " << args << std::endl;
+			userCmd = new Nick();
+			userCmd->execute(server, commandName, it, args);
+			break ;
+
+		default:
+			std::cerr << "Error: command " << commandName << " does not exist" << std::endl;
+			return (false);
+	}
+	//executeChannelCommands(buffer, client);
+	// boolean pour RPL
 	return (true);
 }
 
-
-// bool Server::executeUserCommands(char *buffer)
-// {
-// 	std::string input(buffer);
-// 	std::stringstream ss(input);
-// 	std::cout << "INPUT: " << input << std::endl;
-// 	std::string commandName;
-// 	std::string args;
-// 	ss >> commandName;
-// 	std::cout << "command: " << commandName << std::endl;
-// 	if (ss.fail())
-// 	{
-// 		std::cerr << "Error: stringstream failed" << std::endl;
-// 		ss.clear();
-// 		return (false);
-// 	}
-
-// 	Client	client;
-// 	int cmdType = isClientCommand(commandName.c_str());
-// 	if (cmdType == -1)
-// 	{
-// 		std::cerr << "Error: command " << commandName << " does not exist" << std::endl;
-// 		return (false);
-// 	}
-
-// 	ACommand *userCmd = NULL;
-// 	std::cout << "FD USERRRRRRR = " << client.getFd() << std::endl;
-// 	switch (cmdType)
-// 	{
-// 		case PASS:
-// 			std::cout << "PASS FOUND" << std::endl;
-// 			args = input.substr(5, input.length());
-// 			std::cout << "ARGS: " << args << std::endl;
-// 			userCmd = new Pass();
-// 			userCmd->execute(commandName, client, args);
-// 			break ;
-
-// 		case USER:
-// 			std::cout << "FD USER = " << client.getFd() << std::endl;
-// 			std::cout << "USER FOUND" << std::endl;
-// 			args = input.substr(5, input.length());
-// 			std::cout << "ARGS: " << args << std::endl;
-// 			userCmd = new User();
-// 			userCmd->execute(commandName, client, args);
-// 			break ;
-
-// 		case NICK:
-// 			std::cout << "NICK FOUND" << std::endl;
-// 			args = input.substr(5, input.length());
-// 			std::cout << "ARGS: " << args << std::endl;
-// 			userCmd = new Nick();
-// 			userCmd->execute(commandName, client, args);
-// 			break ;
-
-// 		default:
-// 			std::cerr << "Error: command " << commandName << " does not exist" << std::endl;
-// 			return (false);
-// 	}
-// 	//executeChannelCommands(buffer, client);
-// 	// boolean pour RPL
-// 	return (true);
-// }
-
-// void	Server::sendMsgtoClient(int fd, std::string msg)
-// {
-// 	if (send(fd, msg.data(), msg.size(), 0) < 0)
-// 		std::cout << "send failed : " << strerror(errno) << std::endl;
-// }
-
-// void	Server::closeFds(void)
-// {
-// 	std::cout << "All fds are closed" << std::endl;
-// 	close(this->_socketFd);
-// }
-
-// void	Server::initServer(void)
-// {
-// 	while (!signalGlobal)
-// 	{
-// 		...
-// 	}
-// 	closeFds();
-// }
 
 // void	Server::sendMsgtoChannel(Client &client, std::string msg, std::string channel)
 // {
@@ -286,4 +258,9 @@ bool	Server::newData(int index)
 // 	for (it = idClient[channel].begin(); )
 // }
 
-// ! ne pas oublier de rediriger les messages d'erreurs au client correspondant
+
+void	Server::sendMsgtoClient(int fd, std::string msg)
+{
+	if (send(fd, msg.data(), msg.size(), 0) < 0)
+		std::cout << "send failed : " << strerror(errno) << std::endl;
+}

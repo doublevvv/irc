@@ -32,6 +32,18 @@ class Client;
 
 class Channel;
 
+enum e_userCommands {
+	PASS,
+	USER,
+	NICK,
+	PRIVMSG,
+	CAP,
+	KICK,
+	INVITE,
+	MODE,
+	TOPIC
+};
+
 class Server
 {
 	public:
@@ -46,17 +58,19 @@ class Server
 		static void	sigintHandler(int signal);
 		void	setSignal(void);
 
-		void	initServer();
-		bool	checkPoll();
+		void	initServer(Server &server);
+		bool	checkPoll(Server &server);
+
 		void	newClient();
 		bool	newData(int);
 		void	addClients();
 		void	deleteClients(int i);
-		bool	executeUserCommands(char *buffer);
+		bool	executeCommands(char *buffer, Server &server, std::vector<Client*>::iterator it);
+
 		void	closeFd();
 		void	addClientsFD(int);
-		int	isClientCommand(const char *str);
-		// void	sendMsgtoClient(int fd, std::string msg);
+		int		isCommand(const char *str);
+		void	sendMsgtoClient(int fd, std::string msg);
 
 	private:
 		int	_port;

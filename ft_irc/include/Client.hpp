@@ -22,14 +22,6 @@
 #include <vector>
 #include <map>
 
-enum e_userCommands {
-	USER,
-	PASS,
-	NICK,
-	PRIVMSG,
-	CAP
-};
-
 class Channel;
 
 class Client
@@ -57,20 +49,6 @@ class Client
 		void setIp(std::string);
 		void setUse(bool used);
 		void setFd(int fd);
-
-		void	execute(std::string const &command, std::string const &args);
-		void	executeCmd(std::string const &command, std::string, int, char, std::string);
-		void	executePWD(std::string const &command, std::string const &args);
-		void	executePWDCmd(std::string const &command, std::string password);
-		void	executeNick(std::string const &command, std::string const &args);
-		void	executeNickCmd(std::string nickname);
-		void	executePrivmsg(std::string const &command, std::string const &args);
-		void	executePrivmsgCmd(std::string target, std::string message);
-		void	executeCap(std::string const &command, std::string const &args);
-
-		bool	checkNickname(std::string nickname);
-		void	sendMsgtoClient(int fd, std::string msg);
-		int	isClientCommand(char *str);
 
 	private:
 		int _fd_client;

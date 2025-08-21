@@ -5,6 +5,7 @@
 #include "../include/Client.hpp"
 #include "../include/Errors.hpp"
 #include "../include/Replies.hpp"
+#include "../include/Server.hpp"
 
 class Client;
 
@@ -16,7 +17,7 @@ class Nick : public ACommand
 		Nick	&operator=(Nick const &obj);
 		virtual ~Nick();
 
-		virtual void execute(std::string const &command, Client &client, const std::string &args);
+		virtual void execute(Server &server, std::string const &command, std::vector<Client*>::iterator it, std::string const &args);
 };
 
 #endif

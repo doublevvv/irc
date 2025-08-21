@@ -12,12 +12,12 @@ enum e_channelRole
 	MEMBER
 };
 
-enum e_channelCommands {
-	KICK, // Eject a client from the channel
-	INVITE, // Invite a client to a channel
-	MODE, // Change the channel's mode
-	TOPIC // Change or view the channel topic
-};
+// enum e_channelCommands {
+// 	KICK, // Eject a client from the channel
+// 	INVITE, // Invite a client to a channel
+// 	MODE, // Change the channel's mode
+// 	TOPIC // Change or view the channel topic
+// };
 
 class Client;
 

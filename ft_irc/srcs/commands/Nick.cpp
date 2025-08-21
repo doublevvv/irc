@@ -21,7 +21,7 @@ Nick::~Nick()
 	;
 }
 
-void Nick::execute(std::string const &command, Client &client, const std::string &args)
+void Nick::execute(Server &server, std::string const &command, std::vector<Client*>::iterator it, std::string const &args)
 {
 	std::cout << "Entering " << command << " command" << std::endl;
 	std::stringstream ss(args);
@@ -34,7 +34,7 @@ void Nick::execute(std::string const &command, Client &client, const std::string
 	}
 	if (count != 1)
 	{
-		std::cout << ERR_NEEDMOREPARAMS(client.getNick());
+		server.sendMsgtoClient((*it)->getFd(), ERR_NEEDMOREPARAMS((*it)->getNick()));
 		return ;
 	}
 
@@ -53,13 +53,13 @@ void Nick::execute(std::string const &command, Client &client, const std::string
 		if (nickname[1] == ' ' || nickname[i] == ' ' || nickname[i] == ',' || nickname[i] == '*' || nickname[i] == '?' ||
 			nickname[i] == '!' || nickname[i] == '@' || nickname[i] == '.' || nickname[i] == '$' || nickname[i] == ':')
 		{
-			std::cout << ERR_ERRONEUSNICKNAME(nickname, nickname) << std::endl;
+			server.sendMsgtoClient((*it)->getFd(), ERR_ERRONEUSNICKNAME((*it)->getNick(), (*it)->getNick()));
 			return ;
 		}
 	}
-	if (client.getUse() == false)
+	if ((*it)->getUse() == false)
 	{
-		client.setNick(nickname); // * pas besoin
+		(*it)->setNick(nickname); // * pas besoin
 		// If used after registration, the server will return a NICK message
 	}
 	// if (checkNickname(nickname) == true)
@@ -71,5 +71,5 @@ void Nick::execute(std::string const &command, Client &client, const std::string
 	// if (_used == true)
 	// 	std::cout << ERR_NICKNAMEINUSE(nickname, nickname);
 	// vector de nickname pou le comparer entre eux et verifier qu'il n'y a aps de doublons
-	std::cout << "NICKNAME: " << client.getNick() << std::endl;
+	std::cout << "NICKNAME: " << (*it)->getNick() << std::endl;
 }

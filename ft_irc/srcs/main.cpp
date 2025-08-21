@@ -16,8 +16,8 @@ int	main(int argc, char *argv[])
 		{
 			server.setSignal();
 			server.checkArgs(argv);
-			server.initServer();
-			server.checkPoll();
+			server.initServer(server);
+			server.checkPoll(server);
 		}
 		catch(const std::exception& e)
 		{

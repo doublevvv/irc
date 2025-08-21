@@ -1,4 +1,5 @@
 #include "../../include/Pass.hpp"
+#include "../../include/Server.hpp"
 
 Pass::Pass()
 {
@@ -21,9 +22,8 @@ Pass::~Pass()
 	;
 }
 
-void Pass::execute(std::string const &command, Client &client, const std::string &args)
+void Pass::execute(Server &server, std::string const &command, std::vector<Client*>::iterator it, const std::string &args)
 {
-	(void)client;
 	std::cout << "Entering " << command << " command" << std::endl;
 	std::stringstream ss(args);
 	std::string word;
@@ -36,7 +36,8 @@ void Pass::execute(std::string const &command, Client &client, const std::string
 	std::cout << "count = " << count << std::endl;
 	if (count != 1)
 	{
-		std::cout << ERR_NEEDMOREPARAMS(client.getNick());
+		server.sendMsgtoClient((*it)->getFd(), ERR_NEEDMOREPARAMS((*it)->getNick()));
+		// std::cout << ERR_NEEDMOREPARAMS((*it)->getNick());
 		return ;
 	}
 
@@ -44,13 +45,13 @@ void Pass::execute(std::string const &command, Client &client, const std::string
 	ss.seekg(0);
 	std::string password;
 	ss >> password;
-	if (client.getUse() == true)
+	if ((*it)->getUse() == true)
 	{
-		std::cout << ERR_ALREADYREGISTERED(client.getNick());
+		std::cout << ERR_ALREADYREGISTERED((*it)->getNick());
 		return ;
 	}
 	else
-		client.setPass(password);
+		(*it)->setPass(password);
 
-	std::cout << "PASSWORD: " << client.getPass() << std::endl;
+	std::cout << "PASSWORD: " << (*it)->getPass() << std::endl;
 }

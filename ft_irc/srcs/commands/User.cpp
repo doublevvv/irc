@@ -21,7 +21,7 @@ User::~User()
 	;
 }
 
-void User::execute(std::string const &command, Client &client, const std::string &args)
+void User::execute(Server &server, std::string const &command, std::vector<Client*>::iterator it, std::string const &args)
 {
 	std::cout << "Entering " << command << " command" << std::endl;
 	std::stringstream ss(args);
@@ -32,15 +32,13 @@ void User::execute(std::string const &command, Client &client, const std::string
 	{
 		count++;
 	}
-	std::cout << " FD = " << client.getFd() << std::endl;
+	std::cout << " FD = " << (*it)->getUse() << std::endl;
 	if (count != 4)
 	{
-		client.sendMsgtoClient(client.getFd(), ERR_NEEDMOREPARAMS(client.getNick()));
-		// std::cout << ERR_NEEDMOREPARAMS(client.getNick());
+		server.sendMsgtoClient((*it)->getFd(), ERR_NEEDMOREPARAMS((*it)->getNick()));
 		return ;
 	}
 
-	// reflechir a la taille du username ?
 	ss.clear();
 	ss.seekg(0);
 	std::string username;
@@ -56,26 +54,26 @@ void User::execute(std::string const &command, Client &client, const std::string
 
 	if (mode != 0)
 	{
-		std::cerr << command << ": arg mode must be zero\n";
+		server.sendMsgtoClient((*it)->getFd(), "USER: arg mode must be zero\n");
 		return ;
 	}
 	if (unused != '*')
 	{
-		std::cout << command << ": unused must be 'asterisk'" << std::endl;
+		server.sendMsgtoClient((*it)->getFd(), "USER: unused must be 'asterisk'\n");
 		return ;
 	}
-	if (client.getUse())
+	if ((*it)->getUse())
 	{
-		std::cout << ERR_ALREADYREGISTERED(username);
+		server.sendMsgtoClient((*it)->getFd(), ERR_ALREADYREGISTERED((*it)->getUser()));
 		return ;
 	}
 	else
 	{
-		client.setUser(username);
-		client.setReal(realname);
-		client.setUse(true);
+		(*it)->setUser(username);
+		(*it)->setReal(realname);
+		(*it)->setUse(true);
 	}
 
-	std::cout << "USERNAME: " << client.getUser() << std::endl;
-	std::cout << "REALNAME: " << client.getReal() << std::endl;
+	std::cout << "USERNAME: " << (*it)->getUser() << std::endl;
+	std::cout << "REALNAME: " << (*it)->getReal() << std::endl;
 }

@@ -16,7 +16,8 @@ class Pass : public ACommand
 		Pass	&operator=(Pass const &obj);
 		virtual ~Pass();
 
-		virtual void execute(std::string const &command, Client &client, const std::string &args);
+		virtual void execute(Server &server, std::string const &command, std::vector<Client*>::iterator it, std::string const &args);
+
 };
 
 #endif
