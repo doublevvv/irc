@@ -59,13 +59,15 @@ void	Server::initServer()
 	memset(&fds, 0, sizeof(fds));
 	fds[0].fd = _fdserver;
 	fds[0].events = POLLIN;
-	_fdcount++;
 }
 
-bool	Server::checkPoll()
+
+bool Server::checkPoll()
 {
 	std::cout << "POLL FD : " << fds[0].fd << std::endl;
 	std::cout << "Waiting on poll()...\n";
+	char buffer[1024];
+	int	read_bytes;
 	while (signalGlobal == 0) // ? boolean ?
 	{
 		if (poll(fds, _fdcount, -1) <= 0)
@@ -74,22 +76,38 @@ bool	Server::checkPoll()
 			closeFd();
 			return (false);
 		}
-		for (int i = 0; i < _fdcount; i++)
+		if (fds->revents & POLLIN)
 		{
-			// std::cout<<"mask? "<<fds[i].revents << " i == "<<i<<" revents == "<<fds[i].revents <<" pollin == " <<POLLIN<<std::endl;
-			if (fds[i].revents & POLLIN)
+			if (fds->fd == _fdserver)
 			{
-				if (fds[i].fd == _fdserver)
-				{
-					//* accepter nouveaux clients
-					std::cout << "FDS[I] = " << fds[i].fd << std::endl;
-					 std::cout << "i = " << i << std::endl;
-					 newClient();
-					 std::cout << "Listening socket is readable\n";
-				}
-				else
-					newData(i);
+				std::cout << "FDS = " << fds->fd << std::endl;
+				newClient();
+				std::cout << "Listening socket is readable\n";
 			}
+		}
+		for (std::vector<Client*>::iterator it = idClient.begin(); it != idClient.end(); ++it)
+		{
+			std::cout << (*it)->getFd() << std::endl;
+			std::cout << "RECV here\n";
+			memset(buffer, 0, sizeof(buffer));
+			read_bytes = recv((*it)->getFd(), buffer, sizeof(buffer), 0); // * 1er arg clientfd
+			std::cout<<"read byte == "<<read_bytes<<std::endl;
+			buffer[read_bytes] = 0;
+			// std::cout<<"**********************************************************************************"<<std::endl;
+			// std::cout<<"buffer = " << buffer<<std::endl;
+			// std::cout<<"**********************************************************************************"<<std::endl;
+			if (read_bytes <= 0)
+			{
+				if (read_bytes == 0)
+					std::cout << "client closed\n"; // QUIt et delete clients
+				else
+				{
+					std::cout << "recv failed : " << strerror(errno) << std::endl;
+					closeFd();
+				}
+				// ? boolean for connection closed = false if error ?
+			}
+			// excute
 		}
 	}
 	return (true);
@@ -156,27 +174,6 @@ void	Server::newClient()
 
 bool	Server::newData(int index)
 {
-	char buffer[1024];
-	int	read_bytes;
-
-	std::cout << "RECV here\n";
-	read_bytes = recv(fds[index].fd, buffer, sizeof(buffer), 0); // * 1er arg clientfd
-	std::cout<<"read byte == "<<read_bytes<<std::endl;
-	buffer[read_bytes] = 0;
-	// std::cout<<"**********************************************************************************"<<std::endl;
-	// std::cout<<"buffer = " << buffer<<std::endl;
-	// std::cout<<"**********************************************************************************"<<std::endl;
-	if (read_bytes <= 0)
-	{
-		if (read_bytes == 0)
-			std::cout << "client closed\n";
-		else
-		{
-			std::cout << "recv failed : " << strerror(errno) << std::endl;
-			closeFd();
-		}
-		// ? boolean for connection closed = false if error ?
-	}
 	// else
 	// {
 	// 	std::cout << "" << fds[index].fd << " got message : " << buffer << std::endl;
@@ -188,80 +185,19 @@ bool	Server::newData(int index)
 	// 	}
 	// }
 	// ! ne pas toucher commentaire au desssus
-	else
-	{
-		// EXECUTE COMMANDS
-		if (!executeUserCommands(buffer))
-		{
-			return (false);
-		}
-	}
-	deleteClients(index);
-	_fdcount++;
+	// else
+	// {
+	// 	// EXECUTE COMMANDS
+	// 	if (!executeUserCommands(buffer))
+	// 	{
+	// 		return (false);
+	// 	}
+	// }
 	return (true);
 }
 
 
-bool Server::executeUserCommands(char *buffer)
-{
-	std::string input(buffer);
-	std::stringstream ss(input);
-	std::cout << "INPUT: " << input << std::endl;
-	std::string commandName;
-	std::string args;
-	ss >> commandName;
-	std::cout << "command: " << commandName << std::endl;
-	if (ss.fail())
-	{
-		std::cerr << "Error: stringstream failed" << std::endl;
-		ss.clear();
-		return (false);
-	}
-
-	Client	client;
-	int cmdType = client.isClientCommand(commandName.c_str());
-	if (cmdType == -1)
-	{
-		std::cerr << "Error: command " << commandName << " does not exist" << std::endl;
-		return (false);
-	}
-
-	ACommand *userCmd = NULL;
-	switch (cmdType)
-	{
-		case PASS:
-			std::cout << "PASS FOUND" << std::endl;
-			args = input.substr(5, input.length());
-			std::cout << "ARGS: " << args << std::endl;
-			userCmd = new Pass();
-			userCmd->execute(commandName, client, args);
-			break ;
-
-		case USER:
-			std::cout << "USER FOUND" << std::endl;
-			args = input.substr(5, input.length());
-			std::cout << "ARGS: " << args << std::endl;
-			userCmd = new User();
-			userCmd->execute(commandName, client, args);
-			break ;
-
-		case NICK:
-			std::cout << "NICK FOUND" << std::endl;
-			args = input.substr(5, input.length());
-			std::cout << "ARGS: " << args << std::endl;
-			userCmd = new Nick();
-			userCmd->execute(commandName, client, args);
-			break ;
-
-		default:
-			std::cerr << "Error: command " << commandName << " does not exist" << std::endl;
-			return (false);
-	}
-	//executeChannelCommands(buffer, client);
-	return (true);
-}
-
-// bool Server::executeCommands(char *buffer)
+// bool Server::executeUserCommands(char *buffer)
 // {
 // 	std::string input(buffer);
 // 	std::stringstream ss(input);
@@ -277,137 +213,57 @@ bool Server::executeUserCommands(char *buffer)
 // 		return (false);
 // 	}
 
-// 	Channel *channel = NULL;
-// 	int cmdType = channel->isChannelCommand(commandName.c_str());
+// 	Client	client;
+// 	int cmdType = isClientCommand(commandName.c_str());
 // 	if (cmdType == -1)
 // 	{
 // 		std::cerr << "Error: command " << commandName << " does not exist" << std::endl;
 // 		return (false);
 // 	}
 
-// 	Client client;
-// 	// AChannelCommand *cmd = NULL;
+// 	ACommand *userCmd = NULL;
+// 	std::cout << "FD USERRRRRRR = " << client.getFd() << std::endl;
 // 	switch (cmdType)
 // 	{
-// 		case USER:
-// 			args = input.substr(5, input.length());
-// 			std::cout << "ARGS: " << args << std::endl;
-// 			if (args.empty())
-// 			{
-// 				std::cerr << "Error: Missing arguments" << std::endl;
-// 				std::cout << ERR_NEEDMOREPARAMS(NULL) << std::endl;
-// 				return (false);
-// 			}
-// 			client.execute(commandName, args);
-// 			break ;
-
 // 		case PASS:
 // 			std::cout << "PASS FOUND" << std::endl;
 // 			args = input.substr(5, input.length());
 // 			std::cout << "ARGS: " << args << std::endl;
-// 			if (args.empty())
-// 			{
-// 				std::cerr << "Error: Missing arguments" << std::endl;
-// 				std::cout << ERR_NEEDMOREPARAMS(NULL) << std::endl;
-// 				return (false);
-// 			}
-// 			client.executePWD(commandName, args);
+// 			userCmd = new Pass();
+// 			userCmd->execute(commandName, client, args);
+// 			break ;
+
+// 		case USER:
+// 			std::cout << "FD USER = " << client.getFd() << std::endl;
+// 			std::cout << "USER FOUND" << std::endl;
+// 			args = input.substr(5, input.length());
+// 			std::cout << "ARGS: " << args << std::endl;
+// 			userCmd = new User();
+// 			userCmd->execute(commandName, client, args);
 // 			break ;
 
 // 		case NICK:
 // 			std::cout << "NICK FOUND" << std::endl;
 // 			args = input.substr(5, input.length());
 // 			std::cout << "ARGS: " << args << std::endl;
-// 			if (args.empty())
-// 			{
-// 				std::cerr << "Error: Missing arguments" << std::endl;
-// 				std::cout << ERR_NONICKNAMEGIVEN;
-// 				return (false);
-// 			}
-// 			client.executeNick(commandName, args);
+// 			userCmd = new Nick();
+// 			userCmd->execute(commandName, client, args);
 // 			break ;
-// 		case PRIVMSG:
-// 			std::cout << "PRIVMSG FOUND" << std::endl;
-// 			args = input.substr(5, input.length());
-// 			std::cout << "ARGS: " << args << std::endl;
-// 			if (args.empty())
-// 			{
-// 				std::cerr << "Error: Missing arguments" << std::endl;
-// 				std::cout << ERR_NONICKNAMEGIVEN;
-// 				return (false);
-// 			}
-// 			client.executePrivmsg(commandName, args);
-// 			break ;
-// 		case CAP:
-// 			std::cout << "CAP FOUND" << std::endl;
-// 			args = input.substr(4, input.length());
-// 			std::cout << "ARGS: " << args << std::endl;
-// 			if (args.empty())
-// 			{
-// 				std::cerr << "Error: Missing arguments" << std::endl;
-// 				std::cout << ERR_NONICKNAMEGIVEN;
-// 				return (false);
-// 			}
-// 			client.executeCap(commandName, args);
-// 			break ;
-// 		// case KICK:
-// 		// 	if (args.empty())
-// 		// 	{
-// 		// 		std::cerr << "Error: Missing arguments" << std::endl;
-// 		// 		//std::cout << ERR_NEEDMOREPARAMS(nickname, command) << std::endl;
-// 		// 		//return (false);
-// 		// 	}
-// 		// 	args = input.substr(5, input.length());
-// 		// 	std::cout << "args: " << args << std::endl;
-// 		// 	//cmd = new KickCommand();
-// 		// 	cmd->execute(commandName, args);
-// 		// 	break ;
-// 		// 	case INVITE:
-// 		// 		if (args.empty())
-// 		// 		{
-// 		// 			std::cerr << "Error: Missing arguments" << std::endl;
-// 		// 			// std::cout << ERR_NEEDMOREPARAMS(nickname, command) << std::endl;
-// 		// 			return (false);
-// 		// 		}
-// 		// 		args = input.substr(7, input.length());
-// 		// 		std::cout << "args: " << args << std::endl;
-// 		// 		cmd = new InviteCommand();
-// 		// 		cmd->execute(commandName, args);
-// 		// 		break ;
-// 		// 	case TOPIC:
-// 		// 		if (args.empty())
-// 		// 		{
-// 		// 			std::cerr << "Error: Missing arguments" << std::endl;
-// 		// 			// std::cout << ERR_NEEDMOREPARAMS(nickname, command) << std::endl;
-// 		// 			return (false);
-// 		// 		}
-// 		// 		args = input.substr(6, input.length());
-// 		// 		std::cout << "args: " << args << std::endl;
-// 		// 		cmd = new TopicCommand();
-// 		// 		cmd->execute(commandName, args);
-// 		// 		break ;
-// 		// 	case MODE:
-// 		// 		if (args.empty())
-// 		// 		{
-// 		// 			std::cerr << "Error: Missing arguments" << std::endl;
-// 		// 			// std::cout << ERR_NEEDMOREPARAMS(nickname, command) << std::endl;
-// 		// 			return (false);
-// 		// 		}
-// 		// 		args = input.substr(5, input.length());
-// 		// 		std::cout << "args: " << args << std::endl;
-// 		// 		cmd = new ModeCommand();
-// 		// 		cmd->execute(commandName, args);
-// 		// 		break ;
-// 		// 	default:
-// 		// 		std::cerr << "Error: command " << commandName << " does not exist" << std::endl;
-// 		// 		//return (false);
+
+// 		default:
+// 			std::cerr << "Error: command " << commandName << " does not exist" << std::endl;
+// 			return (false);
 // 	}
+// 	//executeChannelCommands(buffer, client);
+// 	// boolean pour RPL
 // 	return (true);
 // }
-/*
-* GERER COMMANDES : You must be able to authenticate, set a nickname, a username, join a channel,
-* send and receive private messages using your reference client
-*/
+
+// void	Server::sendMsgtoClient(int fd, std::string msg)
+// {
+// 	if (send(fd, msg.data(), msg.size(), 0) < 0)
+// 		std::cout << "send failed : " << strerror(errno) << std::endl;
+// }
 
 // void	Server::closeFds(void)
 // {

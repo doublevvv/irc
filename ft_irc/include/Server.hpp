@@ -50,13 +50,13 @@ class Server
 		bool	checkPoll();
 		void	newClient();
 		bool	newData(int);
-		void	add_epoll(int epoll_fd, int fd, int events);
 		void	addClients();
 		void	deleteClients(int i);
 		bool	executeUserCommands(char *buffer);
 		void	closeFd();
-		// void	sendMsgtoClient(Client &client, std::string msg);
-		// void	sendMsgtoChannel(Client &client, std::string msg, std::string channel);
+		void	addClientsFD(int);
+		int	isClientCommand(const char *str);
+		// void	sendMsgtoClient(int fd, std::string msg);
 
 	private:
 		int	_port;

@@ -1,8 +1,9 @@
 #include "../include/Server.hpp"
 #include "../include/Client.hpp"
 
-Client::Client() : _fd_client(0), _nickname(""), _username(""), _realname(""), _password(""), _ip_add(""), _status(-1),  _used(false)
+Client::Client() :  _nickname(""), _username(""), _realname(""), _password(""), _ip_add(""), _status(-1),  _used(false)
 {
+	std::cout << "HERRRRE= " << _fd_client << std::endl;
 	std::cout << "Client constructor called" << std::endl;
 }
 
@@ -99,6 +100,11 @@ void Client::setIp(std::string ipadd)
 	this->_ip_add = ipadd;
 }
 
+void Client::setFd(int fd)
+{
+	this->_fd_client = fd;
+}
+
 void Client::setUse(bool used)
 {
 	this->_used = used;
@@ -110,87 +116,27 @@ void Client::setUse(bool used)
 // 	write(_fd, formatted.c_str(), formatted.size());
 // }
 
-int Client::isClientCommand(const char *str)
-{
-	int			i;
-	int			clientCommand_found;
-	const char	*clientCommand[] = {"USER", "PASS", "NICK", NULL};
+// int Client::isClientCommand(char *str)
+// {
+// 	int			i;
+// 	int			clientCommand_found;
+// 	const char	*clientCommand[] = {"USER", "PASS", "NICK", NULL};
 
-	i = 0;
-	clientCommand_found = -1;
-	while (clientCommand[i] != NULL)
-	{
-		if (strcmp(clientCommand[i], str) == 0)
-		{
-			clientCommand_found = i;
-			std::cout << "command found: " << clientCommand_found << std::endl;
-			break ;
-		}
-		i++;
-	}
-	return (clientCommand_found);
-}
+// 	i = 0;
+// 	clientCommand_found = -1;
+// 	while (clientCommand[i] != NULL)
+// 	{
+// 		if (strcmp(clientCommand[i], str) == 0)
+// 		{
+// 			clientCommand_found = i;
+// 			std::cout << "command found: " << clientCommand_found << std::endl;
+// 			break ;
+// 		}
+// 		i++;
+// 	}
+// 	return (clientCommand_found);
+// }
 
-void	Client::execute(std::string const &command, std::string const &args)
-{
-	std::cout << "Entering " << command << " command" << std::endl;
-	std::stringstream ss(args);
-	std::string username;
-	int mode;
-	char unused;
-	std::string realname;
-	ss >> username >> mode >> unused >> realname;
-
-	std::cout << "username: " << username << std::endl;
-	std::cout << "mode: " << "" << mode << std::endl;
-	std::cout << "unused: " << unused << std::endl;
-	std::cout << "realname:" << realname << std::endl;
-	executeCmd(command, username, mode, unused, realname);
-}
-
-void	Client::executeCmd(std::string const &command, std::string usern, int mode, char unused, std::string realn)
-{
-	if (usern == " " || realn == " ")
-		std::cout << "Could not use space" << std::endl;
-	// reflechir a la taille du username ?
-	if (!usern.empty())
-		setUser(usern);
-	if (!realn.empty())
-		setReal(realn);
-	if (_used == true)
-		std::cout << ERR_ALREADYREGISTERED(usern);
-	if (mode != 0)
-		std::cout << command << ": arg mode must be zero\n";
-	if (unused != '*')
-		std::cout << command << ": unused must be 'asterisk'" << std::endl;
-	_used = true;
-
-	std::cout << "USERNAME: " << getUser() << std::endl;
-	std::cout << "REALNAME: " << getReal() << std::endl;
-}
-
-void	Client::executePWD(std::string const &command, std::string const &args)
-{
-	std::cout << "Entering " << command << " command" << std::endl;
-	std::stringstream ss(args);
-	std::string password;
-	ss >> password;
-
-	std::cout << "" << password << std::endl;
-	executePWDCmd(command, password);
-}
-
-void	Client::executePWDCmd(std::string const &command, std::string password)
-{
-	if (password.empty())
-		std::cout << ERR_NEEDMOREPARAMS(command);
-	if (getUse() == true)
-		std::cout << ERR_ALREADYREGISTERED(password);
-	else
-		setPass(password);
-
-	std::cout << "PASSWORD: " << getPass() << std::endl;
-}
 
 /*
  A "PASS" command is not required for a client connection to be
@@ -210,73 +156,6 @@ void	Client::executePWDCmd(std::string const &command, std::string password)
    it was registered.
 */
 
-
-void	Client::executeNick(std::string const &command, std::string const &args)
-{
-	std::cout << "Entering " << command << " command" << std::endl;
-	std::stringstream ss(args);
-	std::string nickname;
-	ss >> nickname;
-
-	std::cout << "" << nickname << std::endl;
-	executeNickCmd(nickname);
-}
-
-void	Client::executeNickCmd(std::string nickname)
-{
-	for (unsigned int i = 0; i < nickname.size(); i++)
-	{
-		if (nickname[1] == ' ' || nickname[i] == ' ' || nickname[i] == ',' || nickname[i] == '*' || nickname[i] == '?' ||
-			nickname[i] == '!' || nickname[i] == '@' || nickname[i] == '.' || nickname[1] == '$' || nickname[i] == ':')
-		{
-			std::cout << "HERE NICKNAME = " << nickname[i] << std::endl;
-			std::cout << ERR_ERRONEUSNICKNAME(nickname, nickname) << std::endl;
-			// exit (1);
-		}
-		std::cout << "I = " << nickname[i] << std::endl;
-		std::cout << "NUMBER I = " << i << std::endl;
-	}
-	if (nickname.size() > 10)
-	{
-		std::cout << "NICK: max length for nickname is 9\n";
-		return ;
-		// ! return here, must nt go in the setnick function
-	}
-	if (!nickname.empty() && getUse() == false)
-	{
-		// setNick(nickname); // * pas besoin
-		// If used after registration, the server will return a NICK message
-	}
-	if (checkNickname(nickname) == true)
-	{
-		nckn.push_back(nickname);
-		std::cout << "nickname changed to : " << nickname << std::endl;
-
-	}
-	// if (_used == true)
-	// 	std::cout << ERR_NICKNAMEINUSE(nickname, nickname);
-	// vector de nickname pou le comparer entre eux et verifier qu'il n'y a aps de doublons
-	std::cout << "NICKNAME: " << getNick() << std::endl;
-}
-
-bool	Client::checkNickname(std::string nickname)
-{
-	std::cout << "VECTOR HERE\n";
-	std::vector<std::string>::iterator it;
-	for (it = nckn.begin(); it != nckn.end(); it++)
-	{
-		std::cout << "nick vector: " << (*it) << std::endl;
-		if ((*it) == nickname)
-		{
-			std::cout << ERR_NICKNAMEINUSE(nickname, nickname);
-			return (false);
-		}
-	}
-	std::cout << RPL_WELCOME(nickname, getUser(), getIp());
-	std::cout << RPL_YOURHOST(nickname);
-	// std::cout << RPL_CREATED(nickname); time ?
-	return (true);
-}
 
 /*
 	Nicknames are non-empty strings with the following restrictions:

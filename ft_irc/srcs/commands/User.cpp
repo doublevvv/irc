@@ -32,9 +32,11 @@ void User::execute(std::string const &command, Client &client, const std::string
 	{
 		count++;
 	}
+	std::cout << " FD = " << client.getFd() << std::endl;
 	if (count != 4)
 	{
-		std::cout << ERR_NEEDMOREPARAMS(client.getNick());
+		client.sendMsgtoClient(client.getFd(), ERR_NEEDMOREPARAMS(client.getNick()));
+		// std::cout << ERR_NEEDMOREPARAMS(client.getNick());
 		return ;
 	}
 
