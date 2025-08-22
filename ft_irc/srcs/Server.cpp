@@ -26,7 +26,6 @@ void	Server::initServer(Server &server)
 {
 	(void)server;
 	memset(&sa, 0, sizeof(sa));
-	// memset((struct sockaddr*) &sa, 0, sizeof(sa));
 	int opt = 1;
 
 	_fdserver = socket(AF_INET, SOCK_STREAM, 0);
@@ -72,12 +71,14 @@ bool Server::checkPoll(Server &server)
 	int	read_bytes;
 	while (signalGlobal == 0) // ? boolean ?
 	{
+		// std::cerr<<"coucou le poll"<<std::endl;
 		if (poll(fds, _fdcount, -1) <= 0)
 		{
 			std::cout << "poll failed : " << strerror(errno) << std::endl;
-			closeFd();
-			return (false);
+			// closeFd();
+			// return (false);
 		}
+		// std::cerr<<"au revoir le poll"<<std::endl;
 		if (fds->revents & POLLIN)
 		{
 			if (fds->fd == _fdserver)
@@ -87,26 +88,44 @@ bool Server::checkPoll(Server &server)
 				std::cout << "Listening socket is readable\n";
 			}
 		}
-		for (std::vector<Client*>::iterator it = idClient.begin(); it != idClient.end(); ++it)
+		int k = 1;
+		for (std::vector<Client*>::iterator it = idClient.begin(); it != idClient.end(); it++)
 		{
-			std::cout << (*it)->getFd() << std::endl;
-			std::cout << "RECV here\n";
+			read_bytes = 0;
+			// std::cout << (*it)->getFd() << std::endl;
+			// std::cout << "RECV here\n";
 			memset(buffer, 0, sizeof(buffer));
-			read_bytes = recv((*it)->getFd(), buffer, sizeof(buffer), 0); // * 1er arg clientfd
-			std::cout<<"read byte == "<<read_bytes<<std::endl;
-			buffer[read_bytes] = 0;
-			if (read_bytes <= 0)
+			if (fds[k].revents & POLLIN)
 			{
-				if (read_bytes == 0)
-					std::cout << "client closed\n"; // QUIt et delete clients
-				else
+				// std::cerr<<"coucou le recv"<<std::endl;
+				read_bytes = recv((*it)->getFd(), buffer, sizeof(buffer), 0); // * 1er arg clientfd
+				//add buffer a vecteur in du client
+				// std::cerr<<"au revoir le recv"<<std::endl;
+				// std::cout<<"read byte == "<<read_bytes<<std::endl;
+				buffer[read_bytes] = 0;
+				if (read_bytes <= 0)
 				{
-					std::cout << "recv failed : " << strerror(errno) << std::endl;
-					closeFd();
+					if (read_bytes == 0)
+					{
+						std::cout << "client closed\n"; // QUIt et delete clients
+						closeFd();
+					}
+					else
+					{
+						std::cout << "recv failed : " << strerror(errno) << std::endl;
+						closeFd();
+					}
+					// ? boolean for connection closed = false if error ?
 				}
-				// ? boolean for connection closed = false if error ?
 			}
-			executeCommands(buffer, server, it);
+			//std::string output;
+			//if pollout && reponse prete (it->getOutput(output) == true){
+				//send(it->fd, output.c_str(), output.size());
+			if (read_bytes > 0)//std::string input; if ( it->getInput(input(ref)) == true)
+				executeCommands(buffer, server, it);
+			// _fdcount++;
+			k++;
+			// deleteClients((*it)->getFd());
 		}
 	}
 	return (true);
@@ -153,6 +172,7 @@ void	Server::newClient()
 	_newfdclient = accept(_fdserver, (struct sockaddr *)&client_addr, &addr_size);
 	// * valeur de retour d'accept est le fd client et l relier au vector du client
 	std::cout << "CLIENT FD : " << _newfdclient << std::endl;
+	// fcntl(_newfdclient, O_NONBLOCK);
 	if (_newfdclient < 0)
 	{
 		if (errno != EWOULDBLOCK)
@@ -241,6 +261,13 @@ bool Server::executeCommands(char *buffer, Server &server, std::vector<Client*>:
 			userCmd = new Nick();
 			userCmd->execute(server, commandName, it, args);
 			break ;
+			// * appeler constr AChannel pour cmmand chan
+		// case PRIVMSG:
+		// 	std::cout << "PRIVSG FOUND" << std::endl;
+		// 	args = input.substr(7, input.length());
+		// 	std::cout << "ARGS: " << args << std::endl;
+		// 	executePrivmsg(server, commandName, args); //ajouter client
+		// 	break ;
 
 		default:
 			std::cerr << "Error: command " << commandName << " does not exist" << std::endl;
@@ -251,16 +278,69 @@ bool Server::executeCommands(char *buffer, Server &server, std::vector<Client*>:
 	return (true);
 }
 
-
-// void	Server::sendMsgtoChannel(Client &client, std::string msg, std::string channel)
-// {
-// 	std::vector<Client*>::iterator it;
-// 	for (it = idClient[channel].begin(); )
-// }
-
-
 void	Server::sendMsgtoClient(int fd, std::string msg)
 {
 	if (send(fd, msg.data(), msg.size(), 0) < 0)
 		std::cout << "send failed : " << strerror(errno) << std::endl;
+}
+
+
+void	Server::executePrivmsg(Server &server, Client *client, std::string const &command, std::string const &args)
+{
+	std::cout << "Entering " << command << " command" << std::endl;
+	std::stringstream ss(args);
+	std::string target;
+	std::string message;
+	ss >> target >> message;
+
+	std::cout << "" << target << "-" << message << std::endl;
+	// * if # = channel else DM
+	executePrivmsgCmd(server, client, target, message);
+}
+
+void	Server::executePrivmsgCmd(Server &server, Client *client, std::string target, std::string message)
+{
+	/*
+	command is used to send private messages between users, as well as to send messages to channels.
+	<target> is the nickname of a client or the name of a channel.
+	*/
+	(void)server;
+	if (target[0] == '#')
+	{
+		target.erase(0, 1);
+		std::cout << "TARGET = " << target << std::endl;
+		sendMsgtoChannel(server, client, target, message);
+	}
+	else
+	{
+		std::vector<Client*>::iterator it;
+		for (it = idClient.begin(); it != idClient.end(); ++it)
+		{
+			std::cout << "PRISG vector: " << (*it)->getNick() << std::endl;
+			if ((*it)->getNick() == target)
+			{
+				std::cout << "HEREEEEEEE\n";
+				sendMsgtoClient((*it)->getFd(), message);
+			}
+		}
+	}
+}
+
+void	Server::sendMsgtoChannel(Server &server, Client *client, std::string target, std::string msg)
+{
+	(void)server;
+	if (chan.find(target) == chan.end())
+	{
+		sendMsgtoClient(client->getFd(), ERR_NOSUCHCHANNEL(client->getNick(), target));
+		return ;
+	}
+	Channel *channel = chan[target];
+	// * verifier si client present dans chan avec getclient qui recupere le vector client
+	std::vector<Client*> channelclient = channel->getClientlist();
+	for (int i = 0; i < channelclient.size(); i++)
+	{
+		if (channelclient[i] != client)
+			sendMsgtoClient(channelclient[i]->getFd(), msg);
+	}
+
 }
