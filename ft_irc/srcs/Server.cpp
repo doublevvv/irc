@@ -9,12 +9,41 @@
 #include "../include/Channel.hpp"
 #include "../include/Errors.hpp"
 #include "../include/Replies.hpp"
+#include "../include/Privmsg.hpp"
+
 
 bool	signalGlobal = 0;
 
-Server::Server() : _fdserver(0), _newfdclient(0), _fdcount(0), idClient()
+Server::Server() : _port(0), _password(""), _fdserver(0), _newfdclient(0), _fdcount(0), idClient(), _isInvited(false), _topic(""), _topicRestrictions(false), _userLimit(-1)
 {
 
+}
+
+Server::Server(Server const &obj)
+{
+    this->_port = obj._port;
+    this->_password = obj._password;
+    this->_fdserver = obj._fdserver;
+    this->_newfdclient = obj._newfdclient;
+    this->_fdcount = obj._fdcount;
+    this->_isInvited = obj._isInvited;
+    this->_userLimit = obj._userLimit;
+    this->_topic = obj._topic;
+    this->_topicRestrictions = obj._topicRestrictions;
+}
+
+Server &Server::operator=(Server const &obj)
+{
+    this->_port = obj._port;
+    this->_password = obj._password;
+    this->_fdserver = obj._fdserver;
+    this->_newfdclient = obj._newfdclient;
+    this->_fdcount = obj._fdcount;
+    this->_isInvited = obj._isInvited;
+    this->_userLimit = obj._userLimit;
+    this->_topic = obj._topic;
+    this->_topicRestrictions = obj._topicRestrictions;
+    return (*this);
 }
 
 Server::~Server()
@@ -117,15 +146,22 @@ bool Server::checkPoll(Server &server)
 					}
 					// ? boolean for connection closed = false if error ?
 				}
+				if (read_bytes > 0)//std::string input; if ( it->getInput(input(ref)) == true)
+					executeCommands(buffer, server, it);
+				// _fdcount++;
+				k++;
+				// deleteClients((*it)->getFd());
 			}
 			//std::string output;
 			//if pollout && reponse prete (it->getOutput(output) == true){
 				//send(it->fd, output.c_str(), output.size());
-			if (read_bytes > 0)//std::string input; if ( it->getInput(input(ref)) == true)
-				executeCommands(buffer, server, it);
-			// _fdcount++;
-			k++;
-			// deleteClients((*it)->getFd());
+			if (POLLOUT)
+				sendMessage(it);
+			// if (read_bytes > 0)//std::string input; if ( it->getInput(input(ref)) == true)
+			// 	executeCommands(buffer, server, it);
+			// // _fdcount++;
+			// k++;
+			// // deleteClients((*it)->getFd());
 		}
 	}
 	return (true);
@@ -216,6 +252,11 @@ bool Server::executeCommands(char *buffer, Server &server, std::vector<Client*>:
 {
 	(void)server;
 	std::string input(buffer);
+	const unsigned long pos = input.find('\n');
+	if (pos != std::string::npos)
+	{
+		input.insert(0, input);
+	}
 	std::stringstream ss(input);
 	std::cout << "INPUT: " << input << std::endl;
 	std::string commandName;
@@ -226,121 +267,115 @@ bool Server::executeCommands(char *buffer, Server &server, std::vector<Client*>:
 	{
 		std::cerr << "Error: stringstream failed" << std::endl;
 		ss.clear();
+		// close/free tout ce qui a ete alloue
 		return (false);
 	}
 	int cmdType = isCommand(commandName.c_str());
 	if (cmdType == -1)
 	{
+		// Ecrire le message d'erreur dans le client
 		std::cerr << "Error: command " << commandName << " does not exist" << std::endl;
 		return (false);
 	}
 	ACommand *userCmd = NULL;
 	switch (cmdType)
 	{
-		case PASS:
-			std::cout << "PASS FOUND" << std::endl;
-			args = input.substr(5, input.length());
-			std::cout << "ARGS: " << args << std::endl;
-			userCmd = new Pass();
-			userCmd->execute(server,commandName, it, args);
-			break ;
-
-		case USER:
-			std::cout << "FD USER = " << (*it)->getFd() << std::endl;
-			std::cout << "USER FOUND" << std::endl;
-			args = input.substr(5, input.length());
-			std::cout << "ARGS: " << args << std::endl;
-			userCmd = new User();
-			userCmd->execute(server, commandName, it, args);
-			break ;
-
-		case NICK:
-			std::cout << "NICK FOUND" << std::endl;
-			args = input.substr(5, input.length());
-			std::cout << "ARGS: " << args << std::endl;
-			userCmd = new Nick();
-			userCmd->execute(server, commandName, it, args);
-			break ;
-			// * appeler constr AChannel pour cmmand chan
-		// case PRIVMSG:
-		// 	std::cout << "PRIVSG FOUND" << std::endl;
-		// 	args = input.substr(7, input.length());
+		// case PASS:
+		// 	std::cout << "PASS FOUND" << std::endl;
+		// 	args = input.substr(5, input.length());
 		// 	std::cout << "ARGS: " << args << std::endl;
-		// 	executePrivmsg(server, commandName, args); //ajouter client
+		// 	userCmd = new Pass();
+		// 	userCmd->execute(server, commandName, it, args);
 		// 	break ;
 
-		default:
-			std::cerr << "Error: command " << commandName << " does not exist" << std::endl;
-			return (false);
+		// case USER:
+		// 	std::cout << "FD USER = " << (*it)->getFd() << std::endl;
+		// 	std::cout << "USER FOUND" << std::endl;
+		// 	args = input.substr(5, input.length());
+		// 	std::cout << "ARGS: " << args << std::endl;
+		// 	userCmd = new User();
+		// 	userCmd->execute(server, commandName, it, args);
+		// 	break ;
+
+		// case NICK:
+		// 	std::cout << "NICK FOUND" << std::endl;
+		// 	args = input.substr(5, input.length());
+		// 	std::cout << "ARGS: " << args << std::endl;
+		// 	userCmd = new Nick();
+		// 	userCmd->execute(server, commandName, it, args);
+		// 	break ;
+
+			case PRIVMSG:
+			std::cout << "PRIVMS FOUND" << std::endl;
+			args = input.substr(7, input.length());
+			std::cout << "ARGS: " << args << std::endl;
+			userCmd = new Privmsg();
+			userCmd->execute(server, commandName, it, args);
+			break ;
+
+// 	 	case JOIN:
+// 			std::cout << "JOIN FOUND" << std::endl;
+// 			args = input.substr(5, input.length());
+// 			std::cout << "args: " << args << std::endl;
+// 			userCmd = new Join();
+// 			userCmd->execute(server, commandName, it, args);
+// 			break ;
+
+// 		case KICK:
+// 			std::cout << "KICK FOUND" << std::endl;
+// 			args = input.substr(5, input.length());
+// 			std::cout << "args: " << args << std::endl;
+// 			userCmd = new Kick();
+// 			userCmd->execute(server, commandName, it, args);
+// 			break ;
+
+// 		case INVITE:
+// 			std::cout << "INVITE FOUND" << std::endl;
+// 			args = input.substr(7, input.length());
+// 			std::cout << "args: " << args << std::endl;
+// 			userCmd = new Invite();
+// 			userCmd->execute(server, commandName, it, args);
+// 			break ;
+
+// 		case TOPIC:
+// 			std::cout << "TOPIC FOUND" << std::endl;
+// 			args = input.substr(6, input.length());
+// 			std::cout << "args: " << args << std::endl;
+// 			userCmd = new Topic();
+// 			userCmd->execute(server, commandName, it, args);
+// 			break ;
+
+// 		case MODE:
+// 			std::cout << "MODE FOUND" << std::endl;
+// 			args = input.substr(5, input.length());
+// 			std::cout << "args: " << args << std::endl;
+// 			userCmd = new Mode();
+// 			userCmd->execute(server, commandName, it, args);
+// 			break ;
+
+// 		default:
+// 			std::cerr << "Error: command " << commandName << " does not exist" << std::endl;
+// 			return (false);
 	}
-	//executeChannelCommands(buffer, client);
+	delete (userCmd);
+	/* *** VERIFICATION *** */
+	// displayVector();
+	// displayMap();
+	/* ******************** */
 	// boolean pour RPL
 	return (true);
 }
 
-void	Server::sendMsgtoClient(int fd, std::string msg)
+
+
+void	Server::sendMessage(std::vector<Client*>::iterator it)
 {
-	if (send(fd, msg.data(), msg.size(), 0) < 0)
-		std::cout << "send failed : " << strerror(errno) << std::endl;
-}
-
-
-void	Server::executePrivmsg(Server &server, Client *client, std::string const &command, std::string const &args)
-{
-	std::cout << "Entering " << command << " command" << std::endl;
-	std::stringstream ss(args);
-	std::string target;
-	std::string message;
-	ss >> target >> message;
-
-	std::cout << "" << target << "-" << message << std::endl;
-	// * if # = channel else DM
-	executePrivmsgCmd(server, client, target, message);
-}
-
-void	Server::executePrivmsgCmd(Server &server, Client *client, std::string target, std::string message)
-{
-	/*
-	command is used to send private messages between users, as well as to send messages to channels.
-	<target> is the nickname of a client or the name of a channel.
-	*/
-	(void)server;
-	if (target[0] == '#')
+	std::map<std::string, std::set<int> >::iterator msg_it;
+	for (msg_it = output.begin(); msg_it != output.end(); ++msg_it)
 	{
-		target.erase(0, 1);
-		std::cout << "TARGET = " << target << std::endl;
-		sendMsgtoChannel(server, client, target, message);
+		send((*it)->getFd(), msg_it->first.c_str(), msg_it->first.size(), 0);
+		msg_it->second.erase((*it)->getFd());
+		if (msg_it->second.empty())
+			output.erase(msg_it);
 	}
-	else
-	{
-		std::vector<Client*>::iterator it;
-		for (it = idClient.begin(); it != idClient.end(); ++it)
-		{
-			std::cout << "PRISG vector: " << (*it)->getNick() << std::endl;
-			if ((*it)->getNick() == target)
-			{
-				std::cout << "HEREEEEEEE\n";
-				sendMsgtoClient((*it)->getFd(), message);
-			}
-		}
-	}
-}
-
-void	Server::sendMsgtoChannel(Server &server, Client *client, std::string target, std::string msg)
-{
-	(void)server;
-	if (chan.find(target) == chan.end())
-	{
-		sendMsgtoClient(client->getFd(), ERR_NOSUCHCHANNEL(client->getNick(), target));
-		return ;
-	}
-	Channel *channel = chan[target];
-	// * verifier si client present dans chan avec getclient qui recupere le vector client
-	std::vector<Client*> channelclient = channel->getClientlist();
-	for (int i = 0; i < channelclient.size(); i++)
-	{
-		if (channelclient[i] != client)
-			sendMsgtoClient(channelclient[i]->getFd(), msg);
-	}
-
 }

@@ -33,7 +33,7 @@ class Client
 		Client	&operator=(Client const &obj);
 		~Client();
 
-		int const &getFd(void) const;
+		int &getFd(void);
 		std::string const &getNick() const;
 		std::string const &getUser() const;
 		std::string const &getPass() const;
@@ -57,7 +57,7 @@ class Client
 		std::string _realname;
 		std::string _password;
 		std::string _ip_add;
-		std::vector<std::string> nckn;
+		// std::vector<std::string> nckn;
 		int _status; //* si admin ou pas (membres ou operator)
 		bool	_used;
 

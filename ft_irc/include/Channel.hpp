@@ -33,6 +33,7 @@ class Channel
 		std::string const &getName(void) const;
 		std::string const &getPassword(void) const;
 		std::string	const &getTopic(void) const;
+		std::vector<Client*> const &getClientlist(void) const;
 		bool getTopicRestrictions(void) const;
 		bool getInvited(void) const;
 		int getLimit(void) const;
@@ -70,7 +71,7 @@ class Channel
 		bool	_isInvited;
 		int	_userLimit;
 
-		std::map<std::string, int>	_clients;
+		std::vector<Client*>	_clients;
 		std::vector<std::string>	_invited;
 		std::map<std::string, Channel*> _channels;
 };
