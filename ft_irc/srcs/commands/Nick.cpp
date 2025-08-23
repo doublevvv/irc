@@ -37,7 +37,6 @@ void Nick::execute(Server &server, std::string const &command, std::vector<Clien
 		server.sendMsgtoClient((*it)->getFd(), ERR_NEEDMOREPARAMS((*it)->getNick()));
 		return ;
 	}
-
 	ss.clear();
 	ss.seekg(0);
 	std::string nickname;

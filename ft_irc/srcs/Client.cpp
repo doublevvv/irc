@@ -21,7 +21,6 @@ Client::Client(const Client &obj)
 	this->_ip_add = obj._ip_add;
 	this->_status = obj._status;
 	this->_used = obj._used;
-	this->nckn = obj.nckn;
 }
 
 Client &Client::operator=(Client const &obj)
@@ -34,7 +33,7 @@ Client &Client::operator=(Client const &obj)
 	this->_ip_add = obj._ip_add;
 	this->_status = obj._status;
 	this->_used = obj._used;
-	this->nckn = obj.nckn;
+
 	return (*this);
 }
 
@@ -43,7 +42,7 @@ Client::~Client()
 	std::cout << "Client destructor called" << std::endl;
 }
 
-int const &Client::getFd() const
+int &Client::getFd()
 {
 	return(this->_fd_client);
 }
@@ -110,34 +109,6 @@ void Client::setUse(bool used)
 	this->_used = used;
 }
 
-// void Client::sendMessage(std::string const &message)
-// {
-// 	std::string formatted = message + "\r\n";
-// 	write(_fd, formatted.c_str(), formatted.size());
-// }
-
-// int Client::isClientCommand(char *str)
-// {
-// 	int			i;
-// 	int			clientCommand_found;
-// 	const char	*clientCommand[] = {"USER", "PASS", "NICK", NULL};
-
-// 	i = 0;
-// 	clientCommand_found = -1;
-// 	while (clientCommand[i] != NULL)
-// 	{
-// 		if (strcmp(clientCommand[i], str) == 0)
-// 		{
-// 			clientCommand_found = i;
-// 			std::cout << "command found: " << clientCommand_found << std::endl;
-// 			break ;
-// 		}
-// 		i++;
-// 	}
-// 	return (clientCommand_found);
-// }
-
-
 /*
  A "PASS" command is not required for a client connection to be
    registered, but it MUST precede the latter of the NICK/USER
@@ -167,46 +138,6 @@ void Client::setUse(bool used)
 	Each user is distinguished from other users by a unique nickname having a maximum length of nine (9) characters.
  */
 
-// void	Client::executePrivmsg(std::string const &command, std::string const &args)
-// {
-// 	std::cout << "Entering " << command << " command" << std::endl;
-// 	std::stringstream ss(args);
-// 	std::string target;
-// 	std::string message;
-// 	ss >> target >> message;
-
-// 	std::cout << "" << target << "-" << message << std::endl;
-// 	// 	for (int i = 0; i < idClient.size(); i++)
-// 	// {
-// 	// 	std::cout << "NICK = " << idClient[i]->getNick() << std::endl;
-// 	// }
-// 	executePrivmsgCmd(target, message);
-// }
-
-// void	Client::executePrivmsgCmd(std::string target, std::string message)
-// {
-// 	// * use send ?
-// 	/*
-// 		 command is used to send private messages between users, as well as to send messages to channels.
-// 		<target> is the nickname of a client or the name of a channel.
-// 	*/
-// 	std::vector<std::string>::iterator it;
-// 	for (it = nckn.begin(); it != nckn.end(); it++)
-// 	{
-// 		std::cout << "nick vector: " << (*it) << std::endl;
-// 		if ((*it) == target)
-// 		{
-// 			sendMsgtoClient(getFd(), message);
-// 		}
-// 	}
-// }
-
-// void	Client::sendMsgtoClient(int fd, std::string msg)
-// {
-// 	if (send(fd, msg.data(), msg.size(), 0) < 0)
-// 		std::cout << "send failed : " << strerror(errno) << std::endl;
-// }
-
 // void	Client::executeCap(std::string const &command, std::string const &args)
 // {
 // 	std::cout << "Entering " << command << " command" << std::endl;
@@ -220,9 +151,3 @@ void Client::setUse(bool used)
 // }
 
 
-// 	std::cout << "LEN = " << sizeof(read_bytes) << std::endl;
-// 	int rc = send(fds[index].fd, buffer, read_bytes, 0);
-// 	if (rc < 0)
-// 	{
-// 		std::cout << "send failed : " << strerror(errno) << std::endl;
-// 	}
