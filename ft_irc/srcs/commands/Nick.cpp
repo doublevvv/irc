@@ -27,14 +27,17 @@ void Nick::execute(Server &server, std::string const &command, std::vector<Clien
 	std::stringstream ss(args);
 	std::string word;
 	int count = 0;
+	std::set<int> fds;
+	fds.insert((*it)->getFd());
+	std::map<std::string, std::set<int> > &output = server.getOutput();
 
 	while (ss >> word)
 	{
 		count++;
 	}
-	if (count != 1)
+	if (count < 0)
 	{
-		server.sendMsgtoClient((*it)->getFd(), ERR_NEEDMOREPARAMS((*it)->getNick()));
+		output.insert(std::pair<std::string, std::set<int> >(ERR_NEEDMOREPARAMS((*it)->getNick()), fds));
 		return ;
 	}
 	ss.clear();
@@ -52,7 +55,7 @@ void Nick::execute(Server &server, std::string const &command, std::vector<Clien
 		if (nickname[1] == ' ' || nickname[i] == ' ' || nickname[i] == ',' || nickname[i] == '*' || nickname[i] == '?' ||
 			nickname[i] == '!' || nickname[i] == '@' || nickname[i] == '.' || nickname[i] == '$' || nickname[i] == ':')
 		{
-			server.sendMsgtoClient((*it)->getFd(), ERR_ERRONEUSNICKNAME((*it)->getNick(), (*it)->getNick()));
+			output.insert(std::pair<std::string, std::set<int> >( ERR_ERRONEUSNICKNAME((*it)->getNick(), (*it)->getNick()), fds));
 			return ;
 		}
 	}

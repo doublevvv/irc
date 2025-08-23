@@ -27,6 +27,10 @@ void User::execute(Server &server, std::string const &command, std::vector<Clien
 	std::stringstream ss(args);
 	std::string word;
 	int count = 0;
+	std::set<int> fds;
+	fds.insert((*it)->getFd());
+	std::map<std::string, std::set<int> > &output = server.getOutput();
+
 
 	while (ss >> word)
 	{
@@ -35,7 +39,7 @@ void User::execute(Server &server, std::string const &command, std::vector<Clien
 	std::cout << " FD = " << (*it)->getUse() << std::endl;
 	if (count != 4)
 	{
-		server.sendMsgtoClient((*it)->getFd(), ERR_NEEDMOREPARAMS((*it)->getNick()));
+		output.insert(std::pair<std::string, std::set<int> >(ERR_NEEDMOREPARAMS((*it)->getNick()), fds));
 		return ;
 	}
 
@@ -54,17 +58,17 @@ void User::execute(Server &server, std::string const &command, std::vector<Clien
 
 	if (mode != 0)
 	{
-		server.sendMsgtoClient((*it)->getFd(), "USER: arg mode must be zero\n");
+		output.insert(std::pair<std::string, std::set<int> >("USER: arg mode must be zero\n", fds));
 		return ;
 	}
 	if (unused != '*')
 	{
-		server.sendMsgtoClient((*it)->getFd(), "USER: unused must be 'asterisk'\n");
+		output.insert(std::pair<std::string, std::set<int> >("USER: unused must be 'asterisk'\n", fds));
 		return ;
 	}
 	if ((*it)->getUse())
 	{
-		server.sendMsgtoClient((*it)->getFd(), ERR_ALREADYREGISTERED((*it)->getUser()));
+		output.insert(std::pair<std::string, std::set<int> >(ERR_ALREADYREGISTERED((*it)->getUser()), fds));
 		return ;
 	}
 	else

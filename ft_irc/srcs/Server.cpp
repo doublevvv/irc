@@ -280,30 +280,30 @@ bool Server::executeCommands(char *buffer, Server &server, std::vector<Client*>:
 	ACommand *userCmd = NULL;
 	switch (cmdType)
 	{
-		// case PASS:
-		// 	std::cout << "PASS FOUND" << std::endl;
-		// 	args = input.substr(5, input.length());
-		// 	std::cout << "ARGS: " << args << std::endl;
-		// 	userCmd = new Pass();
-		// 	userCmd->execute(server, commandName, it, args);
-		// 	break ;
+		case PASS:
+			std::cout << "PASS FOUND" << std::endl;
+			args = input.substr(5, input.length());
+			std::cout << "ARGS: " << args << std::endl;
+			userCmd = new Pass();
+			userCmd->execute(server, commandName, it, args);
+			break ;
 
-		// case USER:
-		// 	std::cout << "FD USER = " << (*it)->getFd() << std::endl;
-		// 	std::cout << "USER FOUND" << std::endl;
-		// 	args = input.substr(5, input.length());
-		// 	std::cout << "ARGS: " << args << std::endl;
-		// 	userCmd = new User();
-		// 	userCmd->execute(server, commandName, it, args);
-		// 	break ;
+		case USER:
+			std::cout << "FD USER = " << (*it)->getFd() << std::endl;
+			std::cout << "USER FOUND" << std::endl;
+			args = input.substr(5, input.length());
+			std::cout << "ARGS: " << args << std::endl;
+			userCmd = new User();
+			userCmd->execute(server, commandName, it, args);
+			break ;
 
-		// case NICK:
-		// 	std::cout << "NICK FOUND" << std::endl;
-		// 	args = input.substr(5, input.length());
-		// 	std::cout << "ARGS: " << args << std::endl;
-		// 	userCmd = new Nick();
-		// 	userCmd->execute(server, commandName, it, args);
-		// 	break ;
+		case NICK:
+			std::cout << "NICK FOUND" << std::endl;
+			args = input.substr(5, input.length());
+			std::cout << "ARGS: " << args << std::endl;
+			userCmd = new Nick();
+			userCmd->execute(server, commandName, it, args);
+			break ;
 
 			case PRIVMSG:
 			std::cout << "PRIVMS FOUND" << std::endl;

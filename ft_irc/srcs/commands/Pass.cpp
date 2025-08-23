@@ -28,6 +28,9 @@ void Pass::execute(Server &server, std::string const &command, std::vector<Clien
 	std::stringstream ss(args);
 	std::string word;
 	int count = 0;
+	std::set<int> fds;
+	fds.insert((*it)->getFd());
+	std::map<std::string, std::set<int> > &output = server.getOutput();
 
 	while (ss >> word)
 	{
@@ -36,8 +39,7 @@ void Pass::execute(Server &server, std::string const &command, std::vector<Clien
 	std::cout << "count = " << count << std::endl;
 	if (count != 1)
 	{
-		server.sendMsgtoClient((*it)->getFd(), ERR_NEEDMOREPARAMS((*it)->getNick()));
-		// std::cout << ERR_NEEDMOREPARAMS((*it)->getNick());
+		output.insert(std::pair<std::string, std::set<int> >(ERR_NEEDMOREPARAMS((*it)->getNick()), fds));
 		return ;
 	}
 
@@ -47,7 +49,7 @@ void Pass::execute(Server &server, std::string const &command, std::vector<Clien
 	ss >> password;
 	if ((*it)->getUse() == true)
 	{
-		std::cout << ERR_ALREADYREGISTERED((*it)->getNick());
+		output.insert(std::pair<std::string, std::set<int> >(ERR_ALREADYREGISTERED((*it)->getNick()), fds));
 		return ;
 	}
 	else

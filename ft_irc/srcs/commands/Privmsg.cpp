@@ -1,11 +1,12 @@
 #include "../../include/Privmsg.hpp"
+#include "../../include/ACommand.hpp"
 
 Privmsg::Privmsg()
 {
 	;
 }
 
-Privmsg::Privmsg(Privmsg const &obj)
+Privmsg::Privmsg(Privmsg const &obj) : ACommand(obj)
 {
 	(void)obj;
 }
