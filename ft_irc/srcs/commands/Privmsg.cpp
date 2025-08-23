@@ -30,7 +30,7 @@ void	Privmsg::execute(Server &server, std::string const &command, std::vector<Cl
 	int count = 0;
 	std::set<int> fds;
 	fds.insert((*it)->getFd());
-	// std::map<std::string, std::set<int> > output = server.getOutput();
+	std::map<std::string, std::set<int> > &output = server.getOutput();
 
 	while (ss >> word)
 	{
@@ -38,7 +38,7 @@ void	Privmsg::execute(Server &server, std::string const &command, std::vector<Cl
 	}
 	if (count != 2)
 	{
-		server.output.insert(std::pair<std::string, std::set<int> >(ERR_NEEDMOREPARAMS((*it)->getNick()), fds));
+		output.insert(std::pair<std::string, std::set<int> >(ERR_NEEDMOREPARAMS((*it)->getNick()), fds));
 		return ;
 	}
 	ss.clear();
@@ -51,7 +51,7 @@ void	Privmsg::execute(Server &server, std::string const &command, std::vector<Cl
 	{
 		target.erase(0, 1);
 		std::cout << "TARGET = " << target << std::endl;
-		server.output.insert(std::pair<std::string, std::set<int> >(msg, fds));
+		output.insert(std::pair<std::string, std::set<int> >(msg, fds));
 	}
 	else
 	{
@@ -63,7 +63,7 @@ void	Privmsg::execute(Server &server, std::string const &command, std::vector<Cl
 			if ((*it)->getNick() == target)
 			{
 				std::cout << "HEREEEEEEE\n";
-				server.output.insert(std::pair<std::string, std::set<int> >(msg, fds));
+				output.insert(std::pair<std::string, std::set<int> >(msg, fds));
 			}
 		}
 	}

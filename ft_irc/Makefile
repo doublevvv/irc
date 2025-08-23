@@ -8,9 +8,10 @@ SOURCES = srcs/main.cpp \
 		srcs/Signal.cpp	\
 		srcs/commands/AChannel.cpp	\
 		srcs/commands/ACommand.cpp	\
-		srcs/commands/Pass.cpp	\
-		srcs/commands/User.cpp	\
-		srcs/commands/Nick.cpp	\
+		srcs/commands/Privmsg.cpp \
+# 		srcs/commands/Pass.cpp	\
+# 		srcs/commands/User.cpp	\
+# 		srcs/commands/Nick.cpp	\
 
 SRCS = $(addprefix $(OBJ_DIR)/, $(SOURCES))
 

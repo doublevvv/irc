@@ -96,7 +96,7 @@ class Server
 		bool	modeI(std::string const &client, std::string const &arg);
 		bool	modeK(std::string const &client, std::string const &arg, std::string const &password);
 		bool	modeL(std::string const &client, std::string const &arg, int const &limit);
-		std::map<std::string, std::set<int> > getOutput(void)
+		std::map<std::string, std::set<int> > &getOutput(void)
 		{
 			return (output);
 		}
