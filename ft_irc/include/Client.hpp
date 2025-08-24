@@ -22,6 +22,12 @@
 #include <vector>
 #include <map>
 
+enum e_channelRole
+{
+	OPERATOR,
+	MEMBER
+};
+
 class Channel;
 
 class Client
@@ -33,14 +39,15 @@ class Client
 		Client	&operator=(Client const &obj);
 		~Client();
 
-		int &getFd(void);
+		int const &getFd(void) const;
 		std::string const &getNick() const;
 		std::string const &getUser() const;
 		std::string const &getPass() const;
 		std::string const &getReal() const;
 		std::string const &getIp() const;
+		int &getStatus(void);
 		bool getUse();
-		// void sendMessage(std::string const &message);
+		// std::vector<std::string>&displayClientsInChannels(void);
 
 		void setNick(std::string);
 		void setUser(std::string);
@@ -49,6 +56,11 @@ class Client
 		void setIp(std::string);
 		void setUse(bool used);
 		void setFd(int fd);
+		void setStatus(int status);
+
+		bool tryRegister(void);
+		bool isRegistered(void);
+		bool tryJoinChannel(void);
 
 	private:
 		int _fd_client;
@@ -57,13 +69,9 @@ class Client
 		std::string _realname;
 		std::string _password;
 		std::string _ip_add;
-		// std::vector<std::string> nckn;
 		int _status; //* si admin ou pas (membres ou operator)
 		bool	_used;
-
-		// *buffer d'entree et de sortie
-		//* si \n, erase
-
+		bool	_registered;
 };
 
 #endif

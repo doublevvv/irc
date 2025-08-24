@@ -35,9 +35,10 @@ void Nick::execute(Server &server, std::string const &command, std::vector<Clien
 	{
 		count++;
 	}
-	if (count < 0)
+	if (count < 1)
 	{
-		output.insert(std::pair<std::string, std::set<int> >(ERR_NEEDMOREPARAMS((*it)->getNick()), fds));
+		// output.insert(std::pair<std::string, std::set<int> >(ERR_NONICKNAMEGIVEN, fds));
+		output[ERR_NONICKNAMEGIVEN].insert((*it)->getFd());
 		return ;
 	}
 	ss.clear();
@@ -52,26 +53,24 @@ void Nick::execute(Server &server, std::string const &command, std::vector<Clien
 	}
 	for (unsigned int i = 0; i < nickname.size(); i++)
 	{
-		if (nickname[1] == ' ' || nickname[i] == ' ' || nickname[i] == ',' || nickname[i] == '*' || nickname[i] == '?' ||
-			nickname[i] == '!' || nickname[i] == '@' || nickname[i] == '.' || nickname[i] == '$' || nickname[i] == ':')
+		if (!isupper(nickname[i]) || !isalpha(nickname[i]) || !islower(nickname[i]))
 		{
-			output.insert(std::pair<std::string, std::set<int> >( ERR_ERRONEUSNICKNAME((*it)->getNick(), (*it)->getNick()), fds));
+			output.insert(std::pair<std::string, std::set<int> >(ERR_ERRONEUSNICKNAME((*it)->getNick(), (*it)->getNick()), fds));
 			return ;
 		}
 	}
-	if ((*it)->getUse() == false)
+	// ? boucle pour parcourir vector client et verifier doublons nick client ?
+	if (nickname == (*it)->getNick())
 	{
-		(*it)->setNick(nickname); // * pas besoin
-		// If used after registration, the server will return a NICK message
+		output.insert(std::pair<std::string, std::set<int> >(ERR_NICKNAMEINUSE((*it)->getNick(), (*it)->getNick()), fds));
+		return ;
 	}
-	// if (checkNickname(nickname) == true)
-	// {
-	// 	nckn.push_back(nickname);
-	// 	std::cout << "nickname changed to : " << nickname << std::endl;
-
-	// }
-	// if (_used == true)
-	// 	std::cout << ERR_NICKNAMEINUSE(nickname, nickname);
-	// vector de nickname pou le comparer entre eux et verifier qu'il n'y a aps de doublons
+	if ((*it)->getUse() == false)
+		(*it)->setNick(nickname);
+	else
+	{
+		(*it)->setNick(nickname);
+		output.insert(std::pair<std::string, std::set<int> >(RPL_CHGENICK(nickname), fds));
+	}
 	std::cout << "NICKNAME: " << (*it)->getNick() << std::endl;
 }

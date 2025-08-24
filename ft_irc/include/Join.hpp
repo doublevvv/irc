@@ -1,5 +1,5 @@
-#ifndef KICK_HPP
-# define KICK_HPP
+#ifndef JOIN_HPP
+# define JOIN_HPP
 
 #include "../include/Server.hpp"
 #include "../include/ACommand.hpp"
@@ -11,16 +11,15 @@ class Server;
 
 class Client;
 
-class Kick : public ACommand
+class Join : public ACommand
 {
 	public:
-		Kick();
-		Kick(Kick const &obj);
-		Kick	&operator=(Kick const &obj);
-		virtual ~Kick();
+		Join();
+		Join(Join const &obj);
+		Join	&operator=(Join const &obj);
+		virtual ~Join();
 
 		virtual void execute(Server &server, std::string const &command, std::vector<Client*>::iterator it, std::string const &args);
-
 };
 
 #endif

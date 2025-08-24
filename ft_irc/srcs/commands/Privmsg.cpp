@@ -48,6 +48,8 @@ void	Privmsg::execute(Server &server, std::string const &command, std::vector<Cl
 	std::string msg;
 	ss >> target >> msg;
 
+	// * cannot send to chan
+	// ? user away ?
 	if (target[0] == '#')
 	{
 		target.erase(0, 1);
@@ -65,6 +67,11 @@ void	Privmsg::execute(Server &server, std::string const &command, std::vector<Cl
 			{
 				std::cout << "HEREEEEEEE\n";
 				output.insert(std::pair<std::string, std::set<int> >(msg, fds));
+			}
+			else
+			{
+				output.insert(std::pair<std::string, std::set<int> >(ERR_NOSUCHNICK((*it)->getNick(), target), fds));
+				return ;
 			}
 		}
 	}

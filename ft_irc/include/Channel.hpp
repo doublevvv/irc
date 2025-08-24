@@ -1,23 +1,11 @@
 #ifndef CHANNEL_HPP
 # define CHANNEL_HPP
 
+#include "Server.hpp"
 #include "Client.hpp"
 #include <iostream>
-#include <map>
 #include <vector>
-
-enum e_channelRole
-{
-	OPERATOR,
-	MEMBER
-};
-
-// enum e_channelCommands {
-// 	KICK, // Eject a client from the channel
-// 	INVITE, // Invite a client to a channel
-// 	MODE, // Change the channel's mode
-// 	TOPIC // Change or view the channel topic
-// };
+#include <map>
 
 class Client;
 
@@ -30,37 +18,33 @@ class Channel
 		Channel	&operator=(Channel const &obj);
 		~Channel();
 
+		//Getters
 		std::string const &getName(void) const;
 		std::string const &getPassword(void) const;
 		std::string	const &getTopic(void) const;
-		std::vector<Client*> const &getClientlist(void) const;
 		bool getTopicRestrictions(void) const;
 		bool getInvited(void) const;
 		int getLimit(void) const;
 		int getNbUsers(void) const;
 
-		void setName(std::string const &name);
-		void setPassword(std::string const &password);
-		bool setTopic(std::string const &topic, std::string const &username);
+		//Setters
+		void setName(std::string &name);
+		void setPassword(std::string &password);
+		void setTopic(std::string const &topic);
 		void setInvited(std::string const &client);
 
-		int isChannelCommand(const char *str);
-		void checkParameterChannel(std::string const &channelName);
-		bool isValid(std::string const &str);
-		void addChannel(Channel &channel);
 		bool isInvited(std::string const &client);
-		bool isClientInChannel(std::string const &name);
-		void addClient(Client *client);
-		void removeClient(std::string const &name);
-		std::string getClient(std::string const &username) const;
-		std::vector<std::string> getClients(void) const;
-		Channel &getChannelByName(std::string const &name);
+		bool isClientInChannel(std::string const &nickname);
+		void addClientToChannel(Client* client);
+		void addInvitedClient(Client *client);
+		void displayMap(void);
+		//void removeClient(std::string const &name);
 
 		// Modes
 		bool modeI(std::string const &client, std::string const &arg);
 		bool modeK(std::string const &client, std::string const &arg, std::string const &password);
 		bool modeL(std::string const &client, std::string const &arg, int const &limit);
-		bool modeO(std::string const &client, std::string const &arg, std::string const &target);
+		bool modeO(std::string const &client, std::string const &arg, std::string const &targetUser);
 		bool modeT(std::string const &client, std::string const &arg);
 
 	private:
@@ -68,12 +52,11 @@ class Channel
 		std::string	_password;
 		std::string	_topic;
 		bool	_topicRestrictions;
-		bool	_isInvited;
+		bool	_isInviteOnly;
 		int	_userLimit;
 
-		std::vector<Client*>	_clients;
+		std::map<std::string, int> _clients;
 		std::vector<std::string>	_invited;
-		std::map<std::string, Channel*> _channels;
 };
 
 #endif

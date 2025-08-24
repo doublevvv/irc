@@ -5,7 +5,7 @@ Kick::Kick()
 	;
 }
 
-Kick::Kick(Kick const &obj)
+Kick::Kick(Kick const &obj) : ACommand()
 {
 	(void)obj;
 }
@@ -21,7 +21,7 @@ Kick::~Kick()
 	;
 }
 
-void Kick::execute(std::string const &command, Client &client, Channel &channel, std::string const &args)
+void Kick::execute(Server &server, std::string const &command, std::vector<Client*>::iterator it, std::string const &args)
 {
 	std::cout << "Entering " << command << " command" << std::endl;
 	std::stringstream ss(args);
@@ -34,13 +34,12 @@ void Kick::execute(std::string const &command, Client &client, Channel &channel,
 	}
 	if (count < 2 || count > 3)
 	{
-		std::cout << ERR_NEEDMOREPARAMS(client.getNick());
+		server.sendMsgtoClient((*it)->getFd(), ERR_NEEDMOREPARAMS((*it)->getNick()));
 		return ;
 	}
 
 	ss.clear();
 	ss.seekg(0);
-
 	std::string channelName;
 	std::string user;
 	std::string comment;
@@ -50,28 +49,41 @@ void Kick::execute(std::string const &command, Client &client, Channel &channel,
 	std::cout << "user: " << user << std::endl;
 	std::cout << "comment: " << comment << std::endl;
 
-	//ERR_NOSUCHCHANNEL(user, channel.getName()); cf CHANNEL.cpp
-	// Channel *channel = Channel::getChannelByName(channelName);
-	// if (!channel)
-	// {
-		// std::cerr << "Error: no such channel " << channelName << std::endl;
-		// std::cout << ERR_NOSUCHCHANNEL(user, channelName) << std::endl;
-		// return;
-	// }
-	if (!channel.isClientInChannel(user))
+	if (!((*it))->tryJoinChannel())
 	{
-		std::cerr << "Error: user " << user << " not in channel" << std::endl;
-		std::cerr << ERR_USERNOTINCHANNEL(user, channel.getName()) << std::endl;
 		return ;
 	}
-	//channel.removeClient(user);
-	// std::cout << user << " kicked " << user << " from " << channel.getName() << std::endl;
-	if (args == "")
+	// Verification si channel existe
+	std::map<std::string, Channel*> &channels = server.getChannels();
+	std::map<std::string, Channel*>::iterator ite = channels.find(channelName);
+	if (ite == channels.end())
 	{
-		std::cout << user << " has been kicked from " << channel.getName() << std::endl;
+		server.sendMsgtoClient((*it)->getFd(), ERR_NOSUCHCHANNEL((*it)->getNick(), channelName));
+		return;
+	}
+	// Verification si user a kick est dans le channel
+	if (!ite->second->isClientInChannel((*it)->getNick()))
+	{
+		std::cerr << "Error: user " << user << " not in channel" << std::endl;
+		server.sendMsgtoClient((*it)->getFd(), ERR_USERNOTINCHANNEL((*it)->getNick(), channelName));
+		return ;
+	}
+	// Verification l’emetteur est operateur du channel
+	if ((*it)->getStatus() != OPERATOR)
+	{
+		server.sendMsgtoClient((*it)->getFd(), ERR_CHANOPRIVISNEEDED((*it)->getNick(), channelName));
+		return;
+	}
+	std::cout << "first: " << ite->first << std::endl;
+	std::cout << "second: " << ite->second << std::endl;
+	server.removeClient((*it)->getNick());
+	if (comment.empty())
+	{
+		std::cout << (*it)->getNick() << " has been kicked from " << channelName << std::endl;
 	}
 	else
 	{
-		std::cout << user << " has been kicked from " << channel.getName() << " because " << args << std::endl;
+		std::cout << (*it)->getNick() << " has been kicked from " << channelName << " because " << comment << std::endl;
 	}
 }
+

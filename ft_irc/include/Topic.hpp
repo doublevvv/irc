@@ -1,22 +1,25 @@
-// #ifndef TOPIC_HPP
-// #define TOPIC_HPP
+#ifndef TOPIC_HPP
+# define TOPIC_HPP
 
-// #include "../include/AChannel.hpp"
-// #include "../include/Channel.hpp"
-// #include "../include/Errors.hpp"
-// #include "../include/Replies.hpp"
+#include "../include/Server.hpp"
+#include "../include/ACommand.hpp"
+#include "../include/Client.hpp"
+#include "../include/Errors.hpp"
+#include "../include/Replies.hpp"
 
-// class Channel;
+class Server;
 
-// class Topic : public AChannel
-// {
-// 	public:
-// 		Topic();
-// 		Topic(Topic const &obj);
-// 		Topic	&operator=(Topic const &obj);
-// 		virtual ~Topic();
+class Client;
 
-// 		virtual void execute(std::string const &command, Client &client, Channel &channel, std::string const &args);
-// };
+class Topic : public ACommand
+{
+	public:
+		Topic();
+		Topic(Topic const &obj);
+		Topic	&operator=(Topic const &obj);
+		virtual ~Topic();
 
-// #endif
+		virtual void execute(Server &server, std::string const &command, std::vector<Client*>::iterator it, std::string const &args);
+};
+
+#endif

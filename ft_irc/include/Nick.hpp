@@ -9,6 +9,8 @@
 
 class Client;
 
+class Server;
+
 class Nick : public ACommand
 {
 	public:

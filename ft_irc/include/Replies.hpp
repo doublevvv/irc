@@ -27,4 +27,5 @@
 #define RPL_MODE(nick, username, channel, chain) ":" + nick + "!~" + username + "@server MODE " + channel + " " + chain + "\r\n"
 #define RPL_PRIVMSG(nick, username, target, message)  ":" + nick + "!~" + username + "@server PRIVMSG " + target + " " + message + "\r\n"
 
+#define RPL_CHGENICK(nickname) nickname + ":" + "has changed nickname" + "\r\n"
 #endif

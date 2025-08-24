@@ -24,36 +24,39 @@ Pass::~Pass()
 
 void Pass::execute(Server &server, std::string const &command, std::vector<Client*>::iterator it, const std::string &args)
 {
+	(void)server;
+	(void)args;
+	(void)it;
 	std::cout << "Entering " << command << " command" << std::endl;
-	std::stringstream ss(args);
-	std::string word;
-	int count = 0;
-	std::set<int> fds;
-	fds.insert((*it)->getFd());
-	std::map<std::string, std::set<int> > &output = server.getOutput();
+	// std::stringstream ss(args);
+	// std::string word;
+	// int count = 0;
+	// std::set<int> fds;
+	// fds.insert((*it)->getFd());
+	// std::map<std::string, std::set<int> > &output = server.getOutput();
 
-	while (ss >> word)
-	{
-		count++;
-	}
-	std::cout << "count = " << count << std::endl;
-	if (count != 1)
-	{
-		output.insert(std::pair<std::string, std::set<int> >(ERR_NEEDMOREPARAMS((*it)->getNick()), fds));
-		return ;
-	}
+	// while (ss >> word)
+	// {
+	// 	count++;
+	// }
+	// std::cout << "count = " << count << std::endl;
+	// if (count != 1)
+	// {
+	// 	output.insert(std::pair<std::string, std::set<int> >(ERR_NEEDMOREPARAMS((*it)->getNick()), fds));
+	// 	return ;
+	// }
 
-	ss.clear();
-	ss.seekg(0);
-	std::string password;
-	ss >> password;
-	if ((*it)->getUse() == true)
-	{
-		output.insert(std::pair<std::string, std::set<int> >(ERR_ALREADYREGISTERED((*it)->getNick()), fds));
-		return ;
-	}
-	else
-		(*it)->setPass(password);
+	// ss.clear();
+	// ss.seekg(0);
+	// std::string password;
+	// ss >> password;
+	// if ((*it)->getUse() == true)
+	// {
+	// 	output.insert(std::pair<std::string, std::set<int> >(ERR_ALREADYREGISTERED((*it)->getNick()), fds));
+	// 	return ;
+	// }
+	// else
+	// 	(*it)->setPass(password);
 
-	std::cout << "PASSWORD: " << (*it)->getPass() << std::endl;
+	// std::cout << "PASSWORD: " << (*it)->getPass() << std::endl;
 }

@@ -1,11 +1,13 @@
 #ifndef USER_HPP
 # define USER_HPP
 
-#include "../include/ACommand.hpp"
+#include "../include/Server.hpp"
 #include "../include/Client.hpp"
+#include "../include/ACommand.hpp"
 #include "../include/Errors.hpp"
 #include "../include/Replies.hpp"
-#include "../include/Server.hpp"
+
+class Server;
 
 class Client;
 

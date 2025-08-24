@@ -31,12 +31,13 @@ void User::execute(Server &server, std::string const &command, std::vector<Clien
 	fds.insert((*it)->getFd());
 	std::map<std::string, std::set<int> > &output = server.getOutput();
 
-
 	while (ss >> word)
 	{
+
 		count++;
 	}
 	std::cout << " FD = " << (*it)->getUse() << std::endl;
+	std::cout << "COUNT WORD = " << count << std::endl;
 	if (count != 4)
 	{
 		output.insert(std::pair<std::string, std::set<int> >(ERR_NEEDMOREPARAMS((*it)->getNick()), fds));

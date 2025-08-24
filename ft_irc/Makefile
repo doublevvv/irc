@@ -6,12 +6,16 @@ SOURCES = srcs/main.cpp \
 		srcs/Client.cpp	\
 		srcs/Channel.cpp	\
 		srcs/Signal.cpp	\
-		srcs/commands/AChannel.cpp	\
 		srcs/commands/ACommand.cpp	\
 		srcs/commands/Privmsg.cpp \
 		srcs/commands/Pass.cpp	\
 		srcs/commands/User.cpp	\
 		srcs/commands/Nick.cpp	\
+		srcs/commands/Join.cpp	\
+		srcs/commands/Kick.cpp	\
+		srcs/commands/Invite.cpp	\
+		srcs/commands/Topic.cpp	\
+		srcs/commands/Mode.cpp
 
 SRCS = $(addprefix $(OBJ_DIR)/, $(SOURCES))
 
@@ -21,20 +25,23 @@ OBJS = $(SRCS:.cpp=.o)
 
 DEPS = $(SRCS:.cpp=.d)
 
-COMPILATOR = c++
+CXX = c++
 
-CCFLAGS = -Wall -Wextra -Werror -std=c++98 -MMD -g3
+CXXFLAGS = -Wall -Wextra -Werror -std=c++98 -MMD -g3
+CXXFLAGS	+=	-I $(HEAD_D)
+
+HEAD_D	=		headers/
 
 RM = rm -rf
 
 all: $(NAME)
 
 $(NAME): $(OBJS)
-	$(COMPILATOR) $(CCFLAGS) $(OBJS) -o $(NAME)
+	$(CXX) $(CXXFLAGS) $(OBJS) -o $(NAME)
 
 $(OBJ_DIR)/%.o: %.cpp
 		@mkdir -p $(@D)
-		$(COMPILATOR) $(CCFLAGS) -c $< -o $@
+		$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
 	$(RM) $(OBJS) $(DEPS)

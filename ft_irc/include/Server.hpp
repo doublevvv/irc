@@ -25,6 +25,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <vector>
+#include <ctime>
 
 extern bool	signalGlobal;
 
@@ -38,10 +39,12 @@ enum e_userCommands {
 	NICK,
 	PRIVMSG,
 	CAP,
+	JOIN,
 	KICK,
 	INVITE,
 	MODE,
-	TOPIC
+	TOPIC,
+	PING
 };
 
 class Server
@@ -96,14 +99,11 @@ class Server
 		bool	modeI(std::string const &client, std::string const &arg);
 		bool	modeK(std::string const &client, std::string const &arg, std::string const &password);
 		bool	modeL(std::string const &client, std::string const &arg, int const &limit);
-		std::map<std::string, std::set<int> > &getOutput(void)
-		{
-			return (output);
-		}
-		std::vector<Client*> getClientId()
-		{
-			return (idClient);
-		}
+		std::map<std::string, std::set<int> > &getOutput(void);
+		std::vector<Client*> getClientId();
+		void	removeClient(std::string const &nickname);
+		bool	FirstThreeCmdsTrue(std::vector<Client*>::iterator it);
+		void	ping(std::vector<Client*>::iterator it);
 
 
 		private:
@@ -111,27 +111,16 @@ class Server
 		std::string	_password;
 		int _fdserver;
 		int _newfdclient;
-		pollfd fds[SOMAXCONN];
+		// pollfd fds[SOMAXCONN];
+		std::vector<struct pollfd> fds;
 		struct sockaddr_in sa; //* structure de donnees de la socket
 		int	_fdcount;
-		// std::map<Client*, std::string> mapclient;
-		//* vector pour acceder au client et tous ses attributs
 		std::map<std::string, Channel*> chan;
 		std::vector<Client*> idClient;
-		std::vector<std::string> input;
+		std::string _input;
 		std::map<std::string, std::set<int> > output;
-
-		bool    _isInvited;
-        std::string    _topic;
-        bool    _topicRestrictions;
-        int    _userLimit;
-        // std::map<Client*, std::string> mapclient;
-        //* vector pour acceder au client et tous ses attributs
-        //* map pour chan <std::string, *channel>?
-        // std::vector<Client*> idClient;
-        // std::map<std::string, Channel*> _channels;
-        // std::vector<std::string>    _invited;
-        // std::vector<std::string> _inChannels;
+        std::map<std::string, Channel*> _channels;
+		int	_cmdtrue; // * pour verifier si 3 premieres cmds rentrees
 };
 
 #endif

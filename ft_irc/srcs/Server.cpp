@@ -1,12 +1,15 @@
 #include "../include/Server.hpp"
 #include "../include/Client.hpp"
+#include "../include/Channel.hpp"
 #include "../include/ACommand.hpp"
-#include "../include/AChannel.hpp"
 #include "../include/Pass.hpp"
 #include "../include/User.hpp"
 #include "../include/Nick.hpp"
 #include "../include/Kick.hpp"
-#include "../include/Channel.hpp"
+#include "../include/Join.hpp"
+#include "../include/Invite.hpp"
+#include "../include/Topic.hpp"
+#include "../include/Mode.hpp"
 #include "../include/Errors.hpp"
 #include "../include/Replies.hpp"
 #include "../include/Privmsg.hpp"
@@ -14,7 +17,7 @@
 
 bool	signalGlobal = 0;
 
-Server::Server() : _port(0), _password(""), _fdserver(0), _newfdclient(0), _fdcount(0), idClient(), _isInvited(false), _topic(""), _topicRestrictions(false), _userLimit(-1)
+Server::Server() : _port(0), _password(""), _fdserver(0), _newfdclient(0), _fdcount(0), idClient()
 {
 
 }
@@ -26,10 +29,7 @@ Server::Server(Server const &obj)
     this->_fdserver = obj._fdserver;
     this->_newfdclient = obj._newfdclient;
     this->_fdcount = obj._fdcount;
-    this->_isInvited = obj._isInvited;
-    this->_userLimit = obj._userLimit;
-    this->_topic = obj._topic;
-    this->_topicRestrictions = obj._topicRestrictions;
+
 }
 
 Server &Server::operator=(Server const &obj)
@@ -39,10 +39,6 @@ Server &Server::operator=(Server const &obj)
     this->_fdserver = obj._fdserver;
     this->_newfdclient = obj._newfdclient;
     this->_fdcount = obj._fdcount;
-    this->_isInvited = obj._isInvited;
-    this->_userLimit = obj._userLimit;
-    this->_topic = obj._topic;
-    this->_topicRestrictions = obj._topicRestrictions;
     return (*this);
 }
 
@@ -54,6 +50,7 @@ Server::~Server()
 void	Server::initServer(Server &server)
 {
 	(void)server;
+	struct pollfd pollServer;
 	memset(&sa, 0, sizeof(sa));
 	int opt = 1;
 
@@ -86,14 +83,17 @@ void	Server::initServer(Server &server)
 	}
 	std::cout << "Listen on FD SERVER: " << _fdserver<< std::endl;
 	memset(&fds, 0, sizeof(fds));
-	fds[0].fd = _fdserver;
-	fds[0].events = POLLIN;
-	_fdcount++;
+	pollServer.fd = _fdserver;
+	pollServer.events = POLLIN;
+	pollServer.revents = 0;
+	fds.push_back(pollServer);
+	// _fdcount++;
 }
 
 
 bool Server::checkPoll(Server &server)
 {
+	(void)server;
 	std::cout << "POLL FD : " << fds[0].fd << std::endl;
 	std::cout << "Waiting on poll()...\n";
 	char buffer[1024];
@@ -101,94 +101,85 @@ bool Server::checkPoll(Server &server)
 	while (signalGlobal == 0) // ? boolean ?
 	{
 		// std::cerr<<"coucou le poll"<<std::endl;
-		if (poll(fds, _fdcount, -1) <= 0)
+		int poll_count = poll(fds.data(), fds.size(), -1);
+		if (poll_count < 0)
 		{
 			std::cout << "poll failed : " << strerror(errno) << std::endl;
 			// closeFd();
 			// return (false);
 		}
-		// std::cerr<<"au revoir le poll"<<std::endl;
-		if (fds->revents & POLLIN)
+		for (size_t i = 0; i < fds.size(); ++i)
 		{
-			if (fds->fd == _fdserver)
+			if (fds[i].revents & POLLIN)
 			{
-				std::cout << "FDS = " << fds->fd << std::endl;
-				newClient();
-				std::cout << "Listening socket is readable\n";
-			}
-		}
-		int k = 1;
-		for (std::vector<Client*>::iterator it = idClient.begin(); it != idClient.end(); it++)
-		{
-			read_bytes = 0;
-			// std::cout << (*it)->getFd() << std::endl;
-			// std::cout << "RECV here\n";
-			memset(buffer, 0, sizeof(buffer));
-			if (fds[k].revents & POLLIN)
-			{
-				// std::cerr<<"coucou le recv"<<std::endl;
-				read_bytes = recv((*it)->getFd(), buffer, sizeof(buffer), 0); // * 1er arg clientfd
-				//add buffer a vecteur in du client
-				// std::cerr<<"au revoir le recv"<<std::endl;
-				// std::cout<<"read byte == "<<read_bytes<<std::endl;
-				buffer[read_bytes] = 0;
-				if (read_bytes <= 0)
+				if (fds[i].fd == _fdserver)
 				{
+					std::cout << "FDS = " << fds[i].fd << std::endl;
+					newClient();
+					std::cout << "Listening socket is readable\n";
+				}
+				else
+				{
+					memset(buffer, 0, sizeof(buffer));
+					read_bytes = 0;
+					std::cout << "RECV here\n";
+					read_bytes = recv(fds[i].fd, buffer, sizeof(buffer), 0); // * 1er arg clientfd
 					if (read_bytes == 0)
 					{
 						std::cout << "client closed\n"; // QUIt et delete clients
-						closeFd();
+						// closeFd();
 					}
-					else
+					if (read_bytes == -1)
 					{
 						std::cout << "recv failed : " << strerror(errno) << std::endl;
 						closeFd();
 					}
+					else
+					{
+						for (std::vector<Client*>::iterator it = idClient.begin(); it != idClient.end(); it++)
+						{
+							if ((*it)->getFd() == fds[i].fd)
+							{
+								std::cout << "BUFFFFFFFFFFFFFFF = " << buffer << std::endl;
+								executeCommands(buffer, server, it);
+
+							}
+							if (POLLOUT)
+								sendMessage(it);
+						}
+					}
 					// ? boolean for connection closed = false if error ?
+					// std::cout << "OK\n";
+					// else
+					// {
+					// 	buffer[read_bytes] = 0;
+					// 	// for (int i = 0; i < idClient.size(); i++)
+					// 	}
 				}
-				if (read_bytes > 0)//std::string input; if ( it->getInput(input(ref)) == true)
-					executeCommands(buffer, server, it);
-				// _fdcount++;
-				k++;
-				// deleteClients((*it)->getFd());
 			}
-			//std::string output;
-			//if pollout && reponse prete (it->getOutput(output) == true){
-				//send(it->fd, output.c_str(), output.size());
-			if (POLLOUT)
-				sendMessage(it);
-			// if (read_bytes > 0)//std::string input; if ( it->getInput(input(ref)) == true)
-			// 	executeCommands(buffer, server, it);
-			// // _fdcount++;
-			// k++;
-			// // deleteClients((*it)->getFd());
 		}
 	}
 	return (true);
 }
 
-void	Server::addClients()
-{
-	for (int k = 0; ;k++)
-	{
-		if (fds[k].fd == 0)
-		{
-			std::cout << "K : " << fds[k].fd << std::endl;
-			// ! le remettre a zero car si rempli, boucle infini //removeClient(fd) addClient(fd)
-			fds[k].fd = _newfdclient;
-			fds[k].events = POLLIN | POLLOUT;
-			_fdcount++;
-			break;
-		}
-	}
-}
+// void	Server::addClients()
+// {
+// 	for (int k = 0; fds.size() ;k++)
+// 	{
+// 		std::cout << "K : " << fds[k].fd << std::endl;
+// 		// ! le remettre a zero car si rempli, boucle infini //removeClient(fd) addClient(fd)
+// 		fds[k].fd = _newfdclient;
+// 		fds[k].events = POLLIN | POLLOUT;
+// 		break;
+// 	}
+// }
 
 void	Server::deleteClients(int index)
 {
 	fds[index] = fds[_fdcount - 1];
-	std::cout << "DELETE FDS : " << fds[index].fd << std::endl;
+	// std::cout << "DELETE FDS : " << fds[index].fd << std::endl;
 	_fdcount--;
-	std::cout << "FD COUNT-- " << _fdcount << std::endl;
+	// std::cout << "FD COUNT-- " << _fdcount << std::endl;
 }
 
 void	Server::closeFd()
@@ -204,6 +195,7 @@ void	Server::newClient()
 	std::cout << "NEW CLIENT\n";
 	struct sockaddr_in client_addr;
 	socklen_t addr_size = sizeof(client_addr);
+	struct pollfd clientpoll;
 
 	_newfdclient = accept(_fdserver, (struct sockaddr *)&client_addr, &addr_size);
 	// * valeur de retour d'accept est le fd client et l relier au vector du client
@@ -217,11 +209,16 @@ void	Server::newClient()
 			closeFd();
 		}
 	}
-	addClients();
+	// addClients();
 	std::string client_ip = inet_ntoa(client_addr.sin_addr);
 	Client *newclient = new Client(_newfdclient);
 	idClient.push_back(newclient);
 	newclient->setIp(client_ip);
+	clientpoll.fd = _newfdclient;
+	clientpoll.events = POLLIN;
+	clientpoll.revents = 0;
+	fds.push_back(clientpoll);
+	std::cout << "NBD CLIENT = " << idClient.size() << std::endl;
 	std::cout << "IP ADD" << newclient->getIp() << std::endl;
 	std::cout << "FD COUNT FTER CLIENT" << _fdcount << std::endl;
 	// ! Ne pas oublier de close ! ne pas close dans le destructeur
@@ -231,7 +228,7 @@ int Server::isCommand(const char *str)
 {
     int            i;
     int            commandFound;
-    const char    *command[] = {"PASS", "USER", "NICK", "PRIVMSG", "CAP", "KICK", "INVITE", "MODE", "TOPIC", NULL};
+    const char    *command[] = {"PASS", "USER", "NICK", "PRIVMSG", "CAP", "KICK", "INVITE", "MODE", "TOPIC", "PING", NULL};
 
     i = 0;
     commandFound = -1;
@@ -250,15 +247,13 @@ int Server::isCommand(const char *str)
 
 bool Server::executeCommands(char *buffer, Server &server, std::vector<Client*>::iterator it)
 {
-	(void)server;
-	std::string input(buffer);
-	const unsigned long pos = input.find('\n');
-	if (pos != std::string::npos)
-	{
-		input.insert(0, input);
-	}
-	std::stringstream ss(input);
-	std::cout << "INPUT: " << input << std::endl;
+	_input += std::string(buffer);
+	std::cout << "Inooout before" << _input << std::endl;
+	const unsigned long pos = _input.find('\n');
+	if (pos == std::string::npos)
+		return (false);
+	std::stringstream ss(_input);
+	std::cout << "_INPUT: " << _input << std::endl;
 	std::string commandName;
 	std::string args;
 	ss >> commandName;
@@ -275,6 +270,8 @@ bool Server::executeCommands(char *buffer, Server &server, std::vector<Client*>:
 	{
 		// Ecrire le message d'erreur dans le client
 		std::cerr << "Error: command " << commandName << " does not exist" << std::endl;
+		commandName.clear();
+		_input.clear();
 		return (false);
 	}
 	ACommand *userCmd = NULL;
@@ -282,81 +279,96 @@ bool Server::executeCommands(char *buffer, Server &server, std::vector<Client*>:
 	{
 		case PASS:
 			std::cout << "PASS FOUND" << std::endl;
-			args = input.substr(5, input.length());
+			args = _input.substr(5, _input.length());
 			std::cout << "ARGS: " << args << std::endl;
 			userCmd = new Pass();
 			userCmd->execute(server, commandName, it, args);
+			_cmdtrue++;
 			break ;
 
 		case USER:
 			std::cout << "FD USER = " << (*it)->getFd() << std::endl;
 			std::cout << "USER FOUND" << std::endl;
-			args = input.substr(5, input.length());
+			args = _input.substr(5, _input.length());
 			std::cout << "ARGS: " << args << std::endl;
 			userCmd = new User();
 			userCmd->execute(server, commandName, it, args);
+			_cmdtrue++;
 			break ;
 
 		case NICK:
 			std::cout << "NICK FOUND" << std::endl;
-			args = input.substr(5, input.length());
+			args = _input.substr(5, _input.length());
 			std::cout << "ARGS: " << args << std::endl;
 			userCmd = new Nick();
 			userCmd->execute(server, commandName, it, args);
+			_cmdtrue++;
 			break ;
 
-			case PRIVMSG:
-			std::cout << "PRIVMS FOUND" << std::endl;
-			args = input.substr(7, input.length());
-			std::cout << "ARGS: " << args << std::endl;
-			userCmd = new Privmsg();
-			userCmd->execute(server, commandName, it, args);
-			break ;
+		// case PRIVMSG:
+		// 	std::cout << "PRIVMS FOUND" << std::endl;
+		// 	args = _input.substr(7, _input.length());
+		// 	std::cout << "ARGS: " << args << std::endl;
+		// 	userCmd = new Privmsg();
+		// 	userCmd->execute(server, commandName, it, args);
+		// 	break ;
 
-// 	 	case JOIN:
-// 			std::cout << "JOIN FOUND" << std::endl;
-// 			args = input.substr(5, input.length());
-// 			std::cout << "args: " << args << std::endl;
-// 			userCmd = new Join();
-// 			userCmd->execute(server, commandName, it, args);
-// 			break ;
+	 	// case JOIN:
+		// 	std::cout << "JOIN FOUND" << std::endl;
+		// 	args = _input.substr(5, _input.length());
+		// 	std::cout << "args: " << args << std::endl;
+		// 	userCmd = new Join();
+		// 	userCmd->execute(server, commandName, it, args);
+		// 	break ;
 
-// 		case KICK:
-// 			std::cout << "KICK FOUND" << std::endl;
-// 			args = input.substr(5, input.length());
-// 			std::cout << "args: " << args << std::endl;
-// 			userCmd = new Kick();
-// 			userCmd->execute(server, commandName, it, args);
-// 			break ;
+		// case KICK:
+		// 	std::cout << "KICK FOUND" << std::endl;
+		// 	args = _input.substr(5, _input.length());
+		// 	std::cout << "args: " << args << std::endl;
+		// 	userCmd = new Kick();
+		// 	userCmd->execute(server, commandName, it, args);
+		// 	break ;
 
-// 		case INVITE:
-// 			std::cout << "INVITE FOUND" << std::endl;
-// 			args = input.substr(7, input.length());
-// 			std::cout << "args: " << args << std::endl;
-// 			userCmd = new Invite();
-// 			userCmd->execute(server, commandName, it, args);
-// 			break ;
+		// case INVITE:
+		// 	std::cout << "INVITE FOUND" << std::endl;
+		// 	args = _input.substr(7, _input.length());
+		// 	std::cout << "args: " << args << std::endl;
+		// 	userCmd = new Invite();
+		// 	userCmd->execute(server, commandName, it, args);
+		// 	break ;
 
-// 		case TOPIC:
-// 			std::cout << "TOPIC FOUND" << std::endl;
-// 			args = input.substr(6, input.length());
-// 			std::cout << "args: " << args << std::endl;
-// 			userCmd = new Topic();
-// 			userCmd->execute(server, commandName, it, args);
-// 			break ;
+		// case TOPIC:
+		// 	std::cout << "TOPIC FOUND" << std::endl;
+		// 	args = _input.substr(6, _input.length());
+		// 	std::cout << "args: " << args << std::endl;
+		// 	userCmd = new Topic();
+		// 	userCmd->execute(server, commandName, it, args);
+		// 	break ;
 
-// 		case MODE:
-// 			std::cout << "MODE FOUND" << std::endl;
-// 			args = input.substr(5, input.length());
-// 			std::cout << "args: " << args << std::endl;
-// 			userCmd = new Mode();
-// 			userCmd->execute(server, commandName, it, args);
-// 			break ;
+		// case MODE:
+		// 	std::cout << "MODE FOUND" << std::endl;
+		// 	args = _input.substr(5, _input.length());
+		// 	std::cout << "args: " << args << std::endl;
+		// 	userCmd = new Mode();
+		// 	userCmd->execute(server, commandName, it, args);
+		// 	break ;
 
-// 		default:
-// 			std::cerr << "Error: command " << commandName << " does not exist" << std::endl;
-// 			return (false);
+		case PING:
+			std::cout << "PING FOUND" << std::endl;
+			args = _input.substr(4, _input.length());
+			std::cout << "args: " << args << std::endl;
+			ping(it);
+			break;
+
+		default:
+			std::cerr << "Error: command " << commandName << " does not exist" << std::endl;
+			commandName.clear();
+			_input.clear();
+			return (false);
 	}
+	commandName.clear();
+	_input.clear();
+	// FirstThreeCmdsTrue(it);
 	delete (userCmd);
 	/* *** VERIFICATION *** */
 	// displayVector();
@@ -366,6 +378,35 @@ bool Server::executeCommands(char *buffer, Server &server, std::vector<Client*>:
 	return (true);
 }
 
+void Server::displayVector(void)
+{
+	std::cout << "Display of clients vector" << std::endl;
+	for (size_t i = 0; i < idClient.size(); i++)
+	{
+		std::cout << "v[" << i << "] = " << idClient[i]->getNick() << std::endl;
+	}
+}
+
+std::vector<Client*> Server::getClients(void)
+{
+	return (idClient);
+}
+
+void	Server::sendMsgtoClient(int fd, std::string msg)
+{
+	if (send(fd, msg.data(), msg.size(), 0) < 0)
+		std::cout << "send failed : " << strerror(errno) << std::endl;
+}
+
+std::map<std::string, Channel*>& Server::getChannels(void)
+{
+	return (_channels);
+}
+
+void	Server::addChannelToChannels(Channel &channel)
+{
+	_channels[channel.getName()] = &channel;
+}
 
 
 void	Server::sendMessage(std::vector<Client*>::iterator it)
@@ -377,5 +418,54 @@ void	Server::sendMessage(std::vector<Client*>::iterator it)
 		msg_it->second.erase((*it)->getFd());
 		if (msg_it->second.empty())
 			output.erase(msg_it);
+
 	}
+}
+
+std::map<std::string, std::set<int> > &Server::getOutput(void)
+{
+	return (output);
+}
+std::vector<Client*> Server::getClientId()
+{
+	return (idClient);
+}
+
+void Server::removeClient(std::string const &nickname)
+{
+	std::vector<Client *>::iterator it;
+
+	for (it = idClient.begin(); it != idClient.end(); it++)
+	{
+		if ((*it)->getNick() == nickname)
+		{
+			idClient.erase(it);
+			return;
+		}
+	}
+}
+
+bool	Server::FirstThreeCmdsTrue(std::vector<Client*>::iterator it)
+{
+	std::set<int> fds;
+	fds.insert((*it)->getFd());
+
+	if (_cmdtrue == 3)
+	{
+		output.insert(std::pair<std::string, std::set<int> >(RPL_WELCOME((*it)->getNick(), (*it)->getUser(), (*it)->getIp()), fds));
+		output.insert(std::pair<std::string, std::set<int> >(RPL_YOURHOST((*it)->getNick()), fds));
+		// output.insert(std::pair<std::string, std::set<int> >(RPL_CREATED((*it)->getNick(), getTime()), fds));
+		// output.insert(std::pair<std::string, std::set<int> >(RPL_MYINFO((*it)->getNick()), fds)); // servername, version, chanmode ?
+		// output.insert(std::pair<std::string, std::set<int> >(RPL_SUPPORT((*it)->getNick(), getTime()), fds)); // client, modes ?
+	}
+	return (false);
+}
+
+void	Server::ping(std::vector<Client*>::iterator it)
+{
+	(void)it;
+	std::set<int> fds;
+	fds.insert(_fdserver);
+
+	output.insert(std::pair<std::string, std::set<int> >("Pong\n", fds));
 }
