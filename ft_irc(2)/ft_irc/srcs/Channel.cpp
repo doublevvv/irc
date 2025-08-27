@@ -298,6 +298,7 @@ bool Channel::isOperator(std::string const &nickname)
 	return (it->second == OPERATOR);
 }
 
+
 // bool Channel::isValid(std::string const &str)
 // {
 // 	for (size_t i = 1; i < str.length(); i++)

@@ -40,7 +40,10 @@ class Channel
 		void	addClientToChannel(Client* client);
 		void	addInvitedClient(Client *client);
 		void	removeClientFromChannel(std::string const &nickname);
-
+		std::map<std::string, int> getClientList()
+		{
+			return (_clients);
+		}
 		//DEBUG
 		void	displayMap(void);
 

@@ -842,7 +842,7 @@ bool Server::executeCommands(char *buffer, Server &server, std::vector<Client*>:
 		return (false);
 	}
 	ACommand *userCmd = NULL;
-	args = _input.substr(commandName.size() + 1, _input.length());
+	args = _input.substr(commandName.size(), _input.length());
 	switch (cmdType)
 	{
 		case PASS:
@@ -1060,4 +1060,22 @@ void	Server::ping(std::vector<Client*>::iterator it)
 	fds.insert((*it)->getFd());
 
 	output.insert(std::pair<std::string, std::set<int> >("PONG\r\n", fds));
+}
+
+int Server::getClientFd(std::string const &nickname)
+{
+    std::vector<Client *>::iterator it;
+	std::cout << "INSIDE GET CLIENT FD\n";
+
+    for (it = idClient.begin(); it != idClient.end(); it++)
+    {
+		std::cout << "FD GET CLIENT = " << (*it)->getFd() << std::endl;
+		std::cout << "NICK GET CLIENT = " << (*it)->getNick() << std::endl;
+		std::cout << "NICKNMAE= " << nickname << std::endl;
+        // if ((*it)->getNick() == nickname)
+        // {
+            return ((*it)->getFd());
+        // }
+    }
+    return (-1);
 }

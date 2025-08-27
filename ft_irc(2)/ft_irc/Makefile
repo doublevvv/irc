@@ -16,7 +16,8 @@ SOURCES = srcs/main.cpp \
 		srcs/commands/Topic.cpp	\
 		srcs/commands/Mode.cpp	\
 		srcs/commands/Part.cpp	\
-		srcs/commands/Quit.cpp
+		srcs/commands/Quit.cpp \
+		srcs/commands/ACommand.cpp
 
 SRCS = $(addprefix $(OBJ_DIR)/, $(SOURCES))
 

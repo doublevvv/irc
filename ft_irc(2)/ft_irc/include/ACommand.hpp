@@ -17,6 +17,7 @@ class ACommand
 		virtual ~ACommand() {};
 
 		virtual void execute(Server &server, std::string const &command, std::vector<Client*>::iterator it, std::string const &args) = 0;
+		std::set<int> retrieveClient(Server &server, Channel &channel, std::string nickname);
 
 };
 

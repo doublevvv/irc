@@ -17,6 +17,7 @@ class Privmsg : public ACommand
 		virtual ~Privmsg();
 
 		virtual void execute(Server &server, std::string const &command, std::vector<Client*>::iterator it, std::string const &args);
-};
+		std::set<std::string>	noMsgforme(Channel &channel, Client *client);
+	};
 
 #endif

@@ -73,6 +73,8 @@ void Nick::execute(Server &server, std::string const &command, std::vector<Clien
     {
         if (clients[i]->getNick() == nickname && clients[i] != *it)
         {
+			// std::set<int> fds;
+			// fds.insert((*it)->getFd());
 			output.insert(std::pair<std::string, std::set<int> >(ERR_NICKNAMEINUSE((*it)->getNick(), (*it)->getNick()), fds));
             return;
         }
@@ -91,5 +93,6 @@ void Nick::execute(Server &server, std::string const &command, std::vector<Clien
 	// 	output.insert(std::pair<std::string, std::set<int> >(RPL_CHGENICK(nickname), fds));
 	// }
 	(*it)->setNick(nickname);
+	output.insert(std::pair<std::string, std::set<int> >(RPL_CHGENICK((*it)->getNick()), fds));
 	std::cerr << "NICKNAME: " << (*it)->getNick() << std::endl;
 }

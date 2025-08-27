@@ -102,6 +102,7 @@ class Server
 		void	removeClient(std::string const &nickname);
 		bool	FirstThreeCmdsTrue(std::vector<Client*>::iterator it);
 		void	ping(std::vector<Client*>::iterator it);
+		int 	getClientFd(std::string const &nickname);
 
 
 	private:
