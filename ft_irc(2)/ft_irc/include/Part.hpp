@@ -20,6 +20,7 @@ class Part : public ACommand
 		virtual ~Part();
 
 		virtual void execute(Server &server, std::string const &command, std::vector<Client*>::iterator it, std::string const &args);
+		std::vector<std::string> splitAndTrim(std::string const &str);
 
 };
 

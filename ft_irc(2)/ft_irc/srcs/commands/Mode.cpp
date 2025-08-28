@@ -25,142 +25,189 @@ void Mode::execute(Server &server, std::string const &command, std::vector<Clien
 {
 	std::cout << "Entering " << command << " command" << std::endl;
 	std::stringstream ss(args);
-	std::string word;
-	int count = 0;
+	std::string channelName;
+	std::string modes;
+	std::string param;
+
 	std::set<int> fds;
 	fds.insert((*it)->getFd());
 	std::map<std::string, std::set<int> > &output = server.getOutput();
 
-	while (ss >> word)
-	{
-		count++;
-	}
-	std::cout << "count = " << count << std::endl;
-	if (count < 2)
-	{
-		output.insert(std::pair<std::string, std::set<int> >(ERR_NEEDMOREPARAMS((*it)->getNick()), fds));
-		return ;
-	}
-
-	ss.clear();
-	ss.seekg(0); //ss.str(args);
-
-	std::string channelName;
-	std::string modeFlag;
-	ss >> channelName >> modeFlag;
+	ss >> channelName >> modes;
 	std::cout << "channelName: " << channelName << std::endl;
-	std::cout << "modeFlag: " << modeFlag << std::endl;
-
-	if (!((*it))->tryJoinChannel())
+	std::cout << "modes: " << modes << std::endl;
+	if (channelName.empty() || modes.empty())
 	{
+		output.insert(std::make_pair(ERR_NEEDMOREPARAMS((*it)->getNick()), fds));
+		return;
+	}
+	if (channelName[0] != '#' && channelName[0] != '&')
+	{
+		if ((*it)->getNick() == channelName)
+			return ;
+		std::cerr << "Error: Channel name must start with # or &" << std::endl;
+		output.insert(std::pair<std::string, std::set<int> >(ERR_BADCHANMASK((*it)->getNick(), channelName), fds));
 		return ;
 	}
-	// Verifier si le channel existe
+
 	std::map<std::string, Channel*> &channels = server.getChannels();
-	std::map<std::string, Channel*>::iterator ite = channels.find(channelName);
+	std::map<std::string, Channel*>::iterator chanIt = channels.find(channelName);
 
-	if (ite == channels.end())
+	if (chanIt == channels.end())
 	{
-		output.insert(std::pair<std::string, std::set<int> >(ERR_NOSUCHCHANNEL((*it)->getNick(), channelName), fds));
+		output.insert(std::make_pair(ERR_NOSUCHCHANNEL((*it)->getNick(), channelName), fds));
 		return;
 	}
 
-	// Verifier que l’emetteur est operateur du channel
-	if (!ite->second->isOperator((*it)->getNick()))
+	if (!chanIt->second->isOperator((*it)->getNick()))
 	{
-		output.insert(std::pair<std::string, std::set<int> >(ERR_CHANOPRIVISNEEDED((*it)->getNick(), channelName), fds));
+		output.insert(std::make_pair(ERR_CHANOPRIVISNEEDED((*it)->getNick(), channelName), fds));
 		return;
 	}
-	// if (modeFlag == "i")
-	// {
-	// 	modeFlag = "+i";
-	// }
-	// if (modeFlag == "+i" || modeFlag == "-i") // Set/remove Invite-only channel
-	// {
-	// 	if (ite->second->modeI((*it)->getNick(), ite, modeFlag))
-	// 	{
-	// 		std::cout << "Invite mode set to" <<  ite->second->isInviteOnly() << std::endl;
-	// 		//output.insert(std::pair<std::string, std::set<int> >("Invite mode set to " + ite->second->isInviteOnly(), fds));
-	// 	}
-	// 	else
-	// 	{
-	// 		output.insert(std::pair<std::string, std::set<int> >(ERR_NOSUCHCHANNEL((*it)->getNick(), channelName), fds));
-	// 	}
-	// }
-	if (modeFlag == "k")
+
+	char operation = '\0';
+	std::queue<std::string> params;
+
+	while (ss >> param)
 	{
-		modeFlag = "+k";
+		params.push(param);
+		std::cout << "param: " << param << std::endl;
 	}
-	if (modeFlag == "+k" || modeFlag == "-k") // Set/remove the channel key (password)
+
+	for (std::string::size_type i = 0; i < modes.size(); ++i)
 	{
-		std::string password;
-		ss >> password;
-		if (ite->second->modeK((*it)->getNick(), ite, modeFlag, password))
+		char c = modes[i];
+		if (c == '+' || c == '-')
 		{
-			std::cout << "new password: " << password << std::endl;
-			output.insert(std::pair<std::string, std::set<int> >( "Channel key has been changed\n", fds));
+			operation = c;
+			continue;
 		}
-		else
+
+		std::string modeFlag;
+		modeFlag += operation;
+		modeFlag += c;
+
+		std::cout << "modeFlag: " << modeFlag << std::endl;
+		if (modeFlag != "i" && modeFlag != "+i" && modeFlag != "-i" && modeFlag != "+k" && modeFlag != "-k" \
+			&& modeFlag != "l" && modeFlag != "+l" && modeFlag != "-l" && modeFlag != "o" && modeFlag != "+o" && modeFlag != "-o" \
+			&& modeFlag != "t" && modeFlag != "+t" && modeFlag != "-t")
 		{
-			output.insert(std::pair<std::string, std::set<int> >((*it)->getNick() + " cannot change channel key\n", fds));
+			output.insert(std::make_pair("Unknown mode flag: " + modeFlag + "\n", fds));
+		}
+
+		if (modeFlag == "i")
+		{
+			modeFlag = "+i";
+		}
+		if (modeFlag == "+i" || modeFlag == "-i")
+		{
+			chanIt->second->modeI((*it)->getNick(), chanIt, modeFlag);
+			// if (chanIt->second->modeI((*it)->getNick(), chanIt, modeFlag))
+			// {
+			// 	std::cout << "Invite mode set to" <<  chanIt->second->isInviteOnly() << std::endl;
+			// 	output.insert(std::pair<std::string, std::set<int> >("Invite mode set to " + chanIt->second->isInviteOnly(), fds));
+			// }
+			// else
+			// {
+			// 	output.insert(std::pair<std::string, std::set<int> >(ERR_NOSUCHCHANNEL((*it)->getNick(), channelName), fds));
+			// }
+		}
+
+		if (modeFlag == "k")
+		{
+			modeFlag = "+k";
+		}
+		if (modeFlag == "+k" || modeFlag == "-k")
+		{
+			std::string password = "";
+			if (modeFlag == "+k")
+			{
+				if (params.empty())
+				{
+					output.insert(std::make_pair(ERR_NEEDMOREPARAMS((*it)->getNick()), fds));
+					return ;
+				}
+				password = params.front();
+				params.pop();
+			}
+			chanIt->second->modeK((*it)->getNick(), chanIt, modeFlag, password);
+			// if (chanIt->second->modeK((*it)->getNick(), chanIt, modeFlag, password))
+			// {
+			// 	std::cout << "new password: " << password << std::endl;
+			// 	output.insert(std::pair<std::string, std::set<int> >( "Channel key has been changed\n", fds));
+			// }
+			// else
+			// {
+			// 	output.insert(std::pair<std::string, std::set<int> >((*it)->getNick() + " cannot change channel key\n", fds));
+			// }
+		}
+		if (modeFlag == "l")
+		{
+			modeFlag = "+l";
+		}
+		if (modeFlag == "+l" || modeFlag == "-l")
+		{
+			int limit = 0;
+			if (modeFlag == "+l")
+			{
+				if (params.empty())
+				{
+					output.insert(std::make_pair(ERR_NEEDMOREPARAMS((*it)->getNick()), fds));
+					return ;
+				}
+				limit = atoi(params.front().c_str());
+				params.pop();
+			}
+			chanIt->second->modeL((*it)->getNick(), chanIt, modeFlag, limit);
+			// if (chanIt->second->modeL((*it)->getNick(), chanIt, modeFlag, limit))
+			// {
+			// 	std::cout << "User " << (*it)->getNick() << " limited the channel to " << chanIt->second->getLimit() << " user(s)\n" << std::endl;
+			// 	// output.insert(std::pair<std::string, std::set<int> >((*it)->getNick() + " limited the channel to " + chanIt->second->getLimit() + " user(s)\n", fds));
+			// }
+			// else
+			// {
+			// 	output.insert(std::pair<std::string, std::set<int> >((*it)->getNick() + " cannot change user limit", fds));
+			// }
+		}
+		if (modeFlag == "o")
+		{
+			modeFlag = "o";
+		}
+		if (modeFlag == "+o" || modeFlag == "-o")
+		{
+			if (params.empty())
+			{
+				output.insert(std::make_pair(ERR_NEEDMOREPARAMS((*it)->getNick()), fds));
+				return ;
+			}
+			std::string target = params.front();
+			params.pop();
+
+			chanIt->second->modeO((*it)->getNick(), chanIt, modeFlag, target);
+			// if (chanIt->second->modeO((*it)->getNick(), chanIt, modeFlag, target))
+			// {
+			// 	output.insert(std::pair<std::string, std::set<int> >((*it)->getNick() + " granted " + target + "the operator role\n", fds));
+			// }
+			// else
+			// {
+			// 	output.insert(std::pair<std::string, std::set<int> >((*it)->getNick() + " cannot change channel operator privilege\n", fds));
+			// }
+		}
+		if (modeFlag == "t")
+		{
+			modeFlag = "+t";
+		}
+		if (modeFlag == "+t" || modeFlag == "-t")
+		{
+			chanIt->second->modeT((*it)->getNick(), chanIt, modeFlag);
+			// if (chanIt->second->modeT((*it)->getNick(), chanIt, modeFlag))
+			// {
+			// 	std::cout << "User " << (*it)->getNick() << " changed topic restrictions to " << chanIt->second->isTopicRestricted() << std::endl;
+			// }
+			// else
+			// {
+			// 	output.insert(std::pair<std::string, std::set<int> >((*it)->getNick() + " cannot change topic restriction\n", fds));
+			// }
 		}
 	}
-	// if (modeFlag == "l")
-	// {
-	// 	modeFlag = "+l";
-	// }
-	// if (modeFlag == "+l" || modeFlag == "-l") // Set/remove the user limit to channel
-	// {
-	// 	std::string userLimit;
-	// 	ss >> userLimit;
-	// 	std::cout << "userLimit: " << userLimit << std::endl;
-	// 	int limit = atoi(userLimit.c_str());
-	// 	std::cout << "limit: " << limit << std::endl;
-	// 	if (ite->second->modeL((*it)->getNick(), ite, modeFlag, limit))
-	// 	{
-	// 		std::cout << "User " << (*it)->getNick() << " limited the channel to " << ite->second->getLimit() << " user(s)\n" << std::endl;
-	// 		// output.insert(std::pair<std::string, std::set<int> >((*it)->getNick() + " limited the channel to " + (ite->second->getLimit()) + " user(s)\n", fds));
-	// 	}
-	// 	else
-	// 	{
-	// 		output.insert(std::pair<std::string, std::set<int> >((*it)->getNick() + " cannot change user limit", fds));
-	// 	}
-	// }
-	// if (modeFlag == "o")
-	// {
-	// 	modeFlag = "+o";
-	// }
-	// if (modeFlag == "+o" || modeFlag == "-o") // Give/take channel operator privilege
-	// {
-	// 	std::string target;
-	// 	ss >> target;
-	// 	std::cout << "target: " << target << std::endl;
-	// 	if (ite->second->modeO((*it)->getNick(), ite, modeFlag, target))
-	// 	{
-	// 		output.insert(std::pair<std::string, std::set<int> >((*it)->getNick() + " granted " + target + "the operator role\n", fds));
-	// 	}
-	// 	else
-	// 	{
-	// 		output.insert(std::pair<std::string, std::set<int> >((*it)->getNick() + " cannot change channel operator privilege\n", fds));
-	// 	}
-	// }
-	// if (modeFlag == "t")
-	// {
-	// 	modeFlag = "+t";
-	// }
-	// if (modeFlag == "+t" || modeFlag == "-t") // Set/remove the restrictions of the TOPIC command to channel operators
-	// {
-	// 	if (ite->second->modeT((*it)->getNick(), ite, modeFlag))
-	// 	{
-	// 		std::cout << "User " << (*it)->getNick() << " changed topic restrictions to " << ite->second->isTopicRestricted() << std::endl;
-	// 	}
-	// 	else
-	// 	{
-	// 		output.insert(std::pair<std::string, std::set<int> >((*it)->getNick() + " cannot change topic restriction\n", fds));
-	// 	}
-	// }
-	// else
-	// {
-	// 	std::cerr << "Unknown mode: " << modeFlag << std::endl;
-	// }
 }

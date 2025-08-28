@@ -56,29 +56,29 @@ void	Privmsg::execute(Server &server, std::string const &command, std::vector<Cl
 	{
 		// target.erase(0, 1);
 		// std::cout << "TARGET = " << target << std::endl;
-		for (std::map<std::string, Channel*>::iterator jit = chan.begin(); jit != chan.end(); jit++)
+		std::map<std::string, Channel*>::iterator jit = chan.find(target);
+		if (jit != chan.end())
 		{
-			// if (jit->second->getName() != target)
-			// {
-			// 	std::map<std::string, int>	listClient = jit->second->getClientList();
-			// 	if (listClient.find((*it)->getNick()) == listClient.end())
-			// 	{
-			// 		output.insert(std::pair<std::string, std::set<int> >(ERR_NOTONCHANNEL((*it)->getNick(), target), fds));
-			// 		return ;
-			// 	}
-			// }
-			if (jit->second->getName() == target)
+			std::map<std::string, Client*> clientlist = jit->second->getClientList();
+			if (clientlist.find((*it)->getNick()) == clientlist.end())
 			{
-				std::cout <<  "TARGET = " << target << std::endl;
-				fds = retrieveClient(server, *chan[target], target);
-				for (std::set<int>::iterator op = fds.begin(); op!= fds.end(); op++)
-				{
-					std::cout << "FDS INSIDE PRIVS = " << (*op) << std::endl;
-
-					output.insert(std::pair<std::string, std::set<int> >(RPL_PRIVMSG((*it)->getNick(), (*it)->getUser(), target, msg), fds));
-					return ;
-				}
+				std::cout << "ERRRO PRVMSG =" << jit->first << std::endl;
+				std::cout << "ERRRO PRVMSG =" << (*it)->getNick()<< std::endl;
+				output.insert(std::pair<std::string, std::set<int> >(ERR_NOTONCHANNEL((*it)->getNick(), target), fds));
+				return ;
 			}
+
+		}
+		if (chan.find(target) != chan.end())
+		{
+			std::set<int> set = chan[target]->noMsgforme((*it));
+            output[RPL_PRIVMSG((*it)->getNick(), (*it)->getUser(), target, msg)].insert(set.begin(), set.end());
+
+		}
+		else
+		{
+			output.insert(std::pair<std::string, std::set<int> >(ERR_NOSUCHCHANNEL((*it)->getNick(), target), fds));
+			return ;
 		}
 	}
 	else
@@ -93,7 +93,7 @@ void	Privmsg::execute(Server &server, std::string const &command, std::vector<Cl
 				std::set<int> fds;
 				fds.insert((*kit)->getFd());
 				std::cout << "HEREEEEEEE\n";
-				output.insert(std::pair<std::string, std::set<int> >(msg, fds));
+				output.insert(std::pair<std::string, std::set<int> >(RPL_PRIVMSG((*it)->getNick(), (*it)->getUser(), target, msg), fds));
 				// dire qui a envoye le mesage it->get nickanme
 				return ;
 			}
@@ -105,3 +105,4 @@ void	Privmsg::execute(Server &server, std::string const &command, std::vector<Cl
 		}
 	}
 }
+

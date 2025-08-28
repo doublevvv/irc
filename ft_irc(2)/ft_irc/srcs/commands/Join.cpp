@@ -26,6 +26,7 @@ std::vector<std::string> Join::splitAndTrim(std::string const &str)
 	std::vector<std::string> result;
 	size_t start = 0;
 
+	std::cout << "str = " << str << std::endl;
 	while (true)
 	{
 		size_t pos = str.find(',', start);
@@ -41,24 +42,9 @@ std::vector<std::string> Join::splitAndTrim(std::string const &str)
 			token = str.substr(start, pos - start);
 			std::cout << "token else: " << token << std::endl;
 		}
-
-		size_t first = 0;
-		while (first < token.size() && token[first] == ' ')
-		{
-			first++;
-		}
-		size_t last = token.size();
-		while (last > first && token[last - 1] == ' ')
-		{
-			last--;
-		}
-		token = token.substr(first, last - first);
-		std::cout << "first: " << first << std::endl;
-		std::cout << "last: " << last << std::endl;
-		std::cout << "TOKEN: " << token << std::endl;
-
 		if (!token.empty())
 		{
+			std::cout << "token avant ajout " << token << std::endl;
 			result.push_back(token);
 		}
 		if (pos == std::string::npos)
@@ -84,6 +70,10 @@ void Join::leaveAllChannels(Server &server, Client* client)
 		}
 		it++;
 	}
+	// std::vector<std::string> &invitedChannels = getInvitedChannels();
+	// std::vector<std::string>::iterator chanIt = find(invitedChannels.begin(), invitedChannels.end(), client->getNick());
+
+	// invitedChannels->removeClientFromInvited(client->getNick());
 }
 
 void Join::execute(Server &server, std::string const &command, std::vector<Client*>::iterator it, std::string const &args)
@@ -99,6 +89,7 @@ void Join::execute(Server &server, std::string const &command, std::vector<Clien
 
 	if (!((*it))->tryJoinChannel())
 	{
+		output.insert(std::pair<std::string, std::set<int> >("Client must register to access to channels\r\n", fds));
 		return ;
 	}
 	if (channelsStr.empty())
@@ -109,47 +100,38 @@ void Join::execute(Server &server, std::string const &command, std::vector<Clien
 	if (channelsStr == "0")
 	{
 		leaveAllChannels(server, *it);
-		output.insert(std::pair<std::string, std::set<int> >((*it)->getNick() + " has been removed from " + channelsStr + "\n", fds));
+		output.insert(std::pair<std::string, std::set<int> >((*it)->getNick() + " has quit channels" + "\n", fds));
 		return;
 	}
 
 	std::string channelsKeys;
-	std::getline(ss, channelsKeys);
+	//std::getline(ss, channelsKeys);
+	ss >> channelsKeys;
+	std::cout << "channelsKey: " << channelsKeys << std::endl;
 
 	std::vector<std::string> channels = splitAndTrim(channelsStr);
 	std::vector<std::string> keys = splitAndTrim(channelsKeys);
 
-	for (size_t i = 0; i < channels.size(); ++i)
+	for (size_t i = 0; i < channels.size(); i++)
 	{
+		std::cout << "channels["<<i<<"]: " << channels[i] << std::endl;
 		std::string &channelName = channels[i];
 
-		// Verification du prefixe du salon
 		if (channelName[0] != '#' && channelName[0] != '&')
 		{
 			std::cerr << "Error: Channel name must start with # or &" << std::endl;
 			output.insert(std::pair<std::string, std::set<int> >(ERR_BADCHANMASK((*it)->getNick(), channelName), fds));
 			return ;
-			// continue; // passer au channel suivant
 		}
+		std::cout << "channelName: " << channelName << std::endl;
 
 		std::string key = "";
 		if (i < keys.size())
 		{
 			key = keys[i];
-			std::cout << "Channel: " << channels[i] << " | Key: ";
-			if (key.empty())
-			{
-				std::cout << "(none)";
-			}
-			else
-			{
-				std::cout << key;
-			}
-			std::cout << std::endl;
-			i++;
+			std::cout << "key: " << key << std::endl;
 		}
 
-		//joinChannel(server, *it, channels[i], key);
 		std::map<std::string, Channel*> &serverChannels = server.getChannels();
 		Channel *chan = NULL;
 		std::map<std::string, Channel*>::iterator ite = serverChannels.find(channelName);
@@ -157,11 +139,23 @@ void Join::execute(Server &server, std::string const &command, std::vector<Clien
 		if (ite != serverChannels.end())
 		{
 			chan = ite->second;
-
 			if (!chan->getPassword().empty() && chan->getPassword() != key)
 			{
+				std::string pass = chan->getPassword();
 				std::cout << "chan password: " << chan->getPassword() << std::endl;
 				std::cout << "key: " << key << std::endl;
+				std::cout << "chan password length: " << chan->getPassword().size() << std::endl;
+				std::cout << "key length: " << key.size() << std::endl;
+				// for (size_t i = 0; i < pass.length(); i++)
+				// {
+				// 	std::cout << "pass[i] = " << (int)pass[i] << std::endl;
+				// }
+				// std::cout << "----------------------------------------" << std::endl;
+
+				// for (size_t i = 0; i < key.length(); i++)
+				// {
+				// 	std::cout << "key[i] = " << (int)key[i] << std::endl;
+				// }
 				output.insert(std::pair<std::string, std::set<int> >(ERR_BADCHANNELKEY((*it)->getUser(), channelName), fds));
 				return;
 			}
@@ -180,8 +174,8 @@ void Join::execute(Server &server, std::string const &command, std::vector<Clien
 
 			if (!chan->isClientInChannel((*it)->getNick()))
 			{
-				chan->addClientToChannel(*it);
 				(*it)->setStatus(MEMBER);
+				chan->addClientToChannel(*it);
 			}
 		}
 		else
@@ -194,7 +188,37 @@ void Join::execute(Server &server, std::string const &command, std::vector<Clien
 			chan->addClientToChannel((*it));
 			server.addChannelToChannels(*chan);
 		}
-		output.insert(std::pair<std::string, std::set<int> >("Client " + (*it)->getNick() + " joined channel " + chan->getName() + "\n", fds));
+		std::set<int> set = chan->noMsgforme((*it));
+		std::cout << "NICK JOIN = " << (*it)->getNick() << std::endl;
+		std::cout << "USER JOIN = " << (*it)->getUser() << std::endl;
+		std::cout << "CHANNAME JOIN = " << chan->getName() << std::endl;
+
+
+		std::string joinMsg = ":" + (*it)->getNick() + "!~" + (*it)->getUser() + "@host JOIN :" + chan->getName() + "\r\n";
+		std::string topicMsg = "332 " + (*it)->getNick() + " " + chan->getName() + " :" + chan->getTopic() + "\r\n";
+		std::string namesMsg = "353 " + (*it)->getNick() + " = " + chan->getName() + " :" + chan->getClientList(). + "\r\n";
+		std::string endOfNamesMsg = "366 " + (*it)->getNick() + " " + chan->getName() + " :End of /NAMES list\r\n";
+
+		output[joinMsg].insert(set.begin(), set.end());
+		output[topicMsg].insert(fds.begin(), fds.end());
+		output[namesMsg].insert(fds.begin(), fds.end());
+		output[endOfNamesMsg].insert(fds.begin(), fds.end());
+
+		// output.insert(std::pair<std::string, std::set<int> >(RPL_JOIN((*it)->getNick(), (*it)->getUser(), "JOIN", chan->getName()), fds));
+		// output[RPL_JOIN((*it)->getNick(), (*it)->getUser(), "JOIN", chan->getName())].insert(set.begin(), set.end());
+		// if (!chan->getTopic().empty())
+		// 	output[RPL_TOPIC((*it)->getNick(), chan->getName(), chan->getTopic())].insert(set.begin(), set.end());
+		// 	// output.insert(std::pair<std::string, std::set<int> >(RPL_TOPIC((*it)->getNick(), chan->getName(), chan->getTopic()), fds));
+		// // output.insert(std::pair<std::string, std::set<int> >(RPL_NAMREPLY((*it)->getNick(), chan->getName(), "hello"), fds));
+		// output[RPL_NAMREPLY((*it)->getNick(), chan->getName(), "hello")].insert(set.begin(), set.end());
+		// // output.insert(std::pair<std::string, std::set<int> >(RPL_ENDOFNAME((*it)->getNick(),chan->getName()), fds));
+		// output[RPL_ENDOFNAME((*it)->getNick(),chan->getName())].insert(set.begin(), set.end());
+		// output[RPL_JOIN((*it)->getNick(), (*it)->getUser(), "JOIN", chan->getName())].insert(set.begin(), set.end());
+		// std::map<std::string, Client *> &listclient = chan->getClientList();
+		// Le message affiche seulement le nom du dernier channel;
+		/* **** DEBUG **** */
 		chan->displayMap();
+		/* **************** */
 	}
 }
+

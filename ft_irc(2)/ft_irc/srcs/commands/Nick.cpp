@@ -75,7 +75,7 @@ void Nick::execute(Server &server, std::string const &command, std::vector<Clien
         {
 			// std::set<int> fds;
 			// fds.insert((*it)->getFd());
-			output.insert(std::pair<std::string, std::set<int> >(ERR_NICKNAMEINUSE((*it)->getNick(), (*it)->getNick()), fds));
+			output.insert(std::pair<std::string, std::set<int> >(ERR_NICKNAMEINUSE((*it)->getNick(), nickname), fds));
             return;
         }
     }

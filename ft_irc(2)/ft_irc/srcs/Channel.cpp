@@ -68,6 +68,11 @@ int	Channel::getNbUsers(void) const
 	return (static_cast<int>(_clients.size()));
 }
 
+int	Channel::getStatus(void) const
+{
+	return (_status);
+}
+
 void Channel::setName(std::string &name)
 {
 	_name = name;
@@ -88,14 +93,19 @@ void Channel::setLimit(int &limit)
 	_userLimit = limit;
 }
 
-void Channel::setInvited(std::string const &client)
+void Channel::setInvited(bool isInvited)
 {
-	_invited.push_back(client);
+	_isInviteOnly = isInvited;
+}
+
+void Channel::setStatus(int status)
+{
+	_status = status;
 }
 
 bool Channel::isInvited(std::string const &nickname)
 {
-	std::map<std::string, int>::iterator it = _clients.find(nickname);
+	std::map<std::string, Client*>::iterator it = _clients.find(nickname);
 
 	if (it != _clients.end())
 	{
@@ -106,7 +116,8 @@ bool Channel::isInvited(std::string const &nickname)
 
 bool Channel::isClientInChannel(std::string const &nickname)
 {
-	std::map<std::string, int>::iterator it = _clients.find(nickname);
+	std::cout << "nickname: " << nickname << std::endl;
+	std::map<std::string, Client*>::iterator it = _clients.find(nickname);
 
 	if (it != _clients.end())
 	{
@@ -115,9 +126,21 @@ bool Channel::isClientInChannel(std::string const &nickname)
 	return (false);
 }
 
+bool Channel::isClientInInvited(std::string const &nickname)
+{
+	std::vector<std::string>::iterator it = find(_invited.begin(), _invited.end(), nickname);
+
+	if (it != _invited.end())
+	{
+		return (true);
+	}
+	return (false);
+}
+
 void Channel::addClientToChannel(Client* client)
 {
-	_clients[client->getNick()] = client->getStatus();
+	//_clients[client->getNick()] = client->getStatus();
+	_clients[client->getNick()] = client;
 }
 
 void Channel::addInvitedClient(Client *client)
@@ -130,158 +153,171 @@ void Channel::removeClientFromChannel(std::string const &nickname)
 	_clients.erase(nickname);
 }
 
-// MODES
-// bool	Channel::modeI(std::string const &client, std::map<std::string, Channel*>::iterator ite, std::string const &arg)
-// {
-// 	std::map<std::string, int>::iterator it = _clients.find(client);
-// 	std::cout << "first: " << it->first << std::endl;
-// 	std::cout << "second: " << it->second << std::endl;
-
-// 	if (it == _clients.end())
-// 	{
-// 		return (false);
-// 	}
-// 	if (it->second != OPERATOR)
-// 	{
-// 		return (false);
-// 	}
-// 	if (arg == "+i")
-// 	{
-// 		_isInviteOnly = true;
-// 		ite->second->setPassword(password);
-// 		std::cout << "_password: " << ite->second->_password << std::endl;
-// 	}
-// 	else if (arg == "-i")
-// 	{
-// 		_isInviteOnly = false;
-// 	}
-// 	return (true);
-// }
-
-bool Channel::modeK(std::string const &client, std::map<std::string, Channel*>::iterator ite, std::string const &arg, std::string &password)
+void Channel::removeClientFromInvited(std::string const &nickname)
 {
-	std::map<std::string, int>::iterator it = _clients.find(client);
+	std::vector<std::string>::iterator it = find(_invited.begin(), _invited.end(), nickname);
 
+	_invited.erase(it);
+}
+
+std::vector<std::string>& Channel::getInvitedChannels(void)
+{
+	return (_invited);
+}
+
+// MODES
+bool	Channel::modeI(std::string const &client, std::map<std::string, Channel*>::iterator ite, std::string const &arg)
+{
+	std::map<std::string, Client*>::iterator it = _clients.find(client);
 	std::cout << "first: " << it->first << std::endl;
 	std::cout << "second: " << it->second << std::endl;
-
-	std::cout << "password: " << password << std::endl;
-	std::cout << "channel password: " << _password << std::endl;
 
 	if (it == _clients.end())
 	{
 		return (false);
 	}
-	if (it->second != OPERATOR)
+	if (it->second->getStatus() != OPERATOR)
+	{
+		return (false);
+	}
+	if (arg == "+i")
+	{
+		ite->second->setInvited(true);
+		std::cout << "isInvitedOnly: " << ite->second->isInviteOnly() << std::endl;
+		std::cout << "Invite mode set to " << arg << std::endl;
+	}
+	else if (arg == "-i")
+	{
+		ite->second->setInvited(false);
+		std::cout << "isInvitedOnly: " << ite->second->isInviteOnly() << std::endl;
+		std::cout << "Invite mode set to " << arg << std::endl;
+	}
+	return (true);
+}
+
+bool Channel::modeK(std::string const &client, std::map<std::string, Channel*>::iterator ite, std::string const &arg, std::string &password)
+{
+	std::map<std::string, Client*>::iterator it = _clients.find(client);
+
+	std::cout << "first: " << it->first << std::endl;
+	std::cout << "second: " << it->second << std::endl;
+
+	if (it == _clients.end())
+	{
+		return (false);
+	}
+	if (it->second->getStatus() != OPERATOR)
 	{
 		return (false);
 	}
 	if (arg == "+k")
 	{
 		ite->second->setPassword(password);
-		std::cout << "_password: " << ite->second->_password << std::endl;
+		std::cout << "_password: " << ite->second->getPassword() << std::endl;
+		for (size_t i = 0; i < ite->second->getPassword().size(); i++)
+		{
+			std::cout << "modeK value = " << (int)password[i] << std::endl;
+		}
+		std::cout << "Channel key has been set" << std::endl;
 	}
 	else
 	{
-		if (ite->second->getPassword() != password)
-		{
-			return (false);
-		}
-		else
-		{
-			std::cout << "_password" << password << std::endl;
-			ite->second->_password.erase();
-		}
+		ite->second->_password.erase();
+		std::cout << "_password" << ite->second->getPassword() << std::endl;
+		std::cout << "Channel key has been removed" << std::endl;
 	}
 	return (true);
 }
 
-// bool Channel::modeL(std::string const &client, std::map<std::string, Channel*>::iterator ite, std::string const &arg, int &limit)
-// {
-// 	std::map<std::string, int>::iterator it = _clients.find(client);
+bool Channel::modeL(std::string const &client, std::map<std::string, Channel*>::iterator ite, std::string const &arg, int &limit)
+{
+	std::map<std::string, Client*>::iterator it = _clients.find(client);
 
-// 	if (it == _clients.end())
-// 	{
-// 		return (false);
-// 	}
-// 	if (it->second != OPERATOR)
-// 	{
-// 		return (false);
-// 	}
-// 	if (arg == "+l")
-// 	{
-// 		ite->second->setLimit(limit);
-// 		std::cout << "limit: " << ite->second->_userLimit << std::endl;
-// 	}
-// 	else
-// 	{
-// 		ite->second->setLimit(limit);
-// 	}
-// 	return (true);
-// }
+	if (it == _clients.end())
+	{
+		return (false);
+	}
+	if (it->second->getStatus() != OPERATOR)
+	{
+		return (false);
+	}
+	if (arg == "+l")
+	{
+		ite->second->setLimit(limit);
+		std::cout << "limit: " << ite->second->getLimit() << std::endl;
+		std::cout << "Client limited the channel to " << limit << std::endl;
+	}
+	else
+	{
+		ite->second->_userLimit = -1;
+		std::cout << "limit: " << ite->second->getLimit() << std::endl;
+		std::cout << "Client removed the user" << std::endl;
+	}
+	return (true);
+}
 
-// bool Channel::modeO(std::string const &client, std::map<std::string, Channel*>::iterator ite, std::string const &arg, std::string &targetUser)
-// {
-// 	std::map<std::string, int>::iterator it = _clients.find(client);
-// 	std::map<std::string, int>::iterator ite = _clients.find(targetUser);
+bool Channel::modeO(std::string const &client, std::map<std::string, Channel*>::iterator ite, std::string const &arg, std::string &targetUser)
+{
+	(void)ite;
+	std::map<std::string, Client*>::iterator it = _clients.find(client);
+	std::map<std::string, Client*>::iterator iter = _clients.find(targetUser);
 
-// 	if (it == _clients.end() || (ite == _clients.end()))
-// 	{
-// 		std::cout << "target does not exist" << std::endl;
-// 		return (false);
-// 	}
-// 	if (it->second != OPERATOR)
-// 	{
-// 		return (false);
-// 	}
-// 	if (arg == "+o")
-// 	{
-// 		ite->second = OPERATOR;
-// 	}
-// 	else
-// 	{
-// 		ite->second = MEMBER;
-// 	}
-// 	return (true);
-// }
+	if (it == _clients.end() || (iter == _clients.end()))
+	{
+		return (false);
+	}
+	if (it->second->getStatus() != OPERATOR)
+	{
+		return (false);
+	}
+	if (arg == "+o")
+	{
+		iter->second->setStatus(OPERATOR);
+		std::cout << "Client granted operator role" << std::endl;
+	}
+	else
+	{
+		iter->second->setStatus(MEMBER);
+		std::cout << "Client removed channel operator privilege" << std::endl;
+	}
+	return (true);
+}
 
-// bool Channel::modeT(std::string const &client, std::map<std::string, Channel*>::iterator ite, std::string const &arg)
-// {
-// 	std::map<std::string, int>::iterator it = _clients.find(client);
-// 	std::cout << "first: " << it->first << std::endl;
-// 	std::cout << "second: " << it->second << std::endl;
+bool Channel::modeT(std::string const &client, std::map<std::string, Channel*>::iterator ite, std::string const &arg)
+{
+	std::map<std::string, Client*>::iterator it = _clients.find(client);
+	std::cout << "first: " << it->first << std::endl;
+	std::cout << "second: " << it->second << std::endl;
 
-// 	if (it == _clients.end())
-// 	{
-// 		std::cout << "A" << std::endl;
-// 		return (false);
-// 	}
-// 	if (it->second != OPERATOR)
-// 	{
-// 		std::cout << "B" << std::endl;
-// 		return (false);
-// 	}
-// 	if (arg == "+t")
-// 	{
-// 		std::cout << "ICI" << std::endl;
-// 		_topicRestrictions = true;
-// 	}
-// 	else
-// 	{
-// 		std::cout << "LA" << std::endl;
-// 		_topicRestrictions = false;
-// 	}
-// 	return (true);
-// }
+	if (it == _clients.end())
+	{
+		return (false);
+	}
+	if (it->second->getStatus() != OPERATOR)
+	{
+		return (false);
+	}
+	if (arg == "+t")
+	{
+		ite->second->_topicRestrictions = true;
+		std::cout << "Topic restrictions set to " << arg << std::endl;
+	}
+	else
+	{
+		ite->second->_topicRestrictions = false;
+		std::cout << "Topic restrictions mode has been removed" << std::endl;
+	}
+	return (true);
+}
 
 void Channel::displayMap(void)
 {
 	std::cout << "----- DISPLAY MAP -----" << std::endl;
-	std::map<std::string, int>::iterator	it;
+	std::map<std::string, Client*>::iterator	it;
 
 	for(it = _clients.begin(); it != _clients.end(); it++)
 	{
-		std::cout << "key = " << it->first << " => " << "value = " << it->second << std::endl;
+		std::cout << "key = " << it->first << " => " << "value = " << it->second->getFd() << std::endl;
 	}
 	std::cout << std::endl;
 }
@@ -289,15 +325,38 @@ void Channel::displayMap(void)
 
 bool Channel::isOperator(std::string const &nickname)
 {
-    std::map<std::string, int>::const_iterator it = _clients.find(nickname);
+	std::map<std::string, Client*>::const_iterator it = _clients.find(nickname);
 
 	if (it == _clients.end())
 	{
 		return false;
 	}
-	return (it->second == OPERATOR);
+	return (it->second->getStatus() == OPERATOR);
 }
 
+std::set<int> Channel::noMsgforme(Client *client)
+{
+    std::set<int> set;
+    std::map<std::string, Client*> listClient;
+    listClient.insert(_clients.begin(), _clients.end());
+    for (std::map<std::string, Client*>::iterator it = listClient.begin(); it != listClient.end(); it++)
+    {
+        if (it->second != client)
+            set.insert(it->second->getFd());
+    }
+    return (set);
+}
+// std::string Channel::getClient(std::string const &username) const
+// {
+// 	std::map<std::string, int>::const_iterator it = _clients.find(username);
+
+// 	if (it != _clients.end())
+// 	{
+// 		return (it->first);
+// 	}
+// 	std::cerr << "Error: Client " << username << " not found" << std::endl;
+// 	return ("");
+// }
 
 // bool Channel::isValid(std::string const &str)
 // {
@@ -339,14 +398,16 @@ bool Channel::isOperator(std::string const &nickname)
 // 	}
 // }
 
-// std::string Channel::getClient(std::string const &username) const
+// int Server::getClientFd(std::string const &nickname)
 // {
-// 	std::map<std::string, int>::const_iterator it = _clients.find(username);
+// 	std::vector<Client *>::iterator it;
 
-// 	if (it != _clients.end())
+// 	for (it = idClient.begin(); it != idClient.end(); it++)
 // 	{
-// 		return (it->first);
+// 		if ((*it)->getNick() == nickname)
+// 		{
+// 			return ((*it)->getFd());
+// 		}
 // 	}
-// 	std::cerr << "Error: Client " << username << " not found" << std::endl;
-// 	return ("");
+// 	return (-1);
 // }

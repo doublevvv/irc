@@ -27,21 +27,22 @@ void Quit::execute(Server &server, std::string const &command, std::vector<Clien
 
 	std::string quitMessage;
 	std::stringstream ss(args);
-	std::getline(ss, quitMessage);
+	//std::getline(ss, quitMessage);
+	ss >> quitMessage;
 	std::set<int> fds;
 	fds.insert((*it)->getFd());
 	std::map<std::string, std::set<int> > &output = server.getOutput();
 
-	if (!quitMessage.empty() && quitMessage[0] == ' ')
-	{
-		quitMessage.erase(0, 1);
-	}
+	// if (!quitMessage.empty() && quitMessage[0] == ' ')
+	// {
+	// 	quitMessage.erase(0, 1);
+	// }
 
-	std::cout << "Quit message: " << quitMessage << std::endl;
+	// std::cout << "Quit message: " << quitMessage << std::endl;
 
 	// Remove client from all channels
 	std::map<std::string, Channel*> &channels = server.getChannels();
-	for (std::map<std::string, Channel*>::iterator ite = channels.begin(); ite != channels.end(); ++ite)
+	for (std::map<std::string, Channel*>::iterator ite = channels.begin(); ite != channels.end(); ite++)
 	{
 		if (ite->second->isClientInChannel((*it)->getNick()))
 		{
@@ -50,6 +51,7 @@ void Quit::execute(Server &server, std::string const &command, std::vector<Clien
 		}
 	}
 
+	// Envoyer un message a tous les clients du serveur pour leur notifier le depart de x
 	// std::string notification = ":" + (*it)->getNick() + " QUIT";
 	// if (!quitMessage.empty())
 	// {

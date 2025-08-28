@@ -46,19 +46,23 @@ void Topic::execute(Server &server, std::string const &command, std::vector<Clie
 	ss.seekg(0); // ss.str(args);
 	std::string channelName;
 	std::string topicSubject;
-	ss >> channelName;
-	std::getline(ss, topicSubject);
+	ss >> channelName >> topicSubject;
 
-	if (!topicSubject.empty() && topicSubject[0] == ' ')
-	{
-        topicSubject.erase(0, 1);
-	}
-
+	// if (!topicSubject.empty() && topicSubject[0] == ' ')
+	// {
+	// 	topicSubject.erase(0, 1);
+	// }
 	std::cout << "channelName: " << channelName << std::endl;
 	std::cout << "user: " << topicSubject << std::endl;
 
 	if (!((*it))->tryJoinChannel())
 	{
+		return ;
+	}
+	if (channelName[0] != '#' && channelName[0] != '&')
+	{
+		std::cerr << "Error: Channel name must start with # or &" << std::endl;
+		output.insert(std::pair<std::string, std::set<int> >(ERR_BADCHANMASK((*it)->getNick(), channelName), fds));
 		return ;
 	}
 	// Verification si channel existe
@@ -71,7 +75,7 @@ void Topic::execute(Server &server, std::string const &command, std::vector<Clie
 	}
 	if (topicSubject.empty())
 	{
-		std::cout << "Current topic: " << ite->second->getTopic() << std::endl;
+		output.insert(std::pair<std::string, std::set<int> >("Current topic: " + ite->second->getTopic(), fds));
 	}
 	else if (topicSubject == " ")
 	{
